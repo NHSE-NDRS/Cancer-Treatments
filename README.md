@@ -3,8 +3,7 @@
 ###### This code repository accompanies the National Disease Registration Service's (NDRS) treatment data, presenting population-based statistics on the patients recorded to have received chemotherapy, radiotherapy and surgical tumour resections for their tumour in England.
 ###### The code currently available in this repository will produce data for patients diagnosed with cancer in England between 2013-2020, as displayed in the tool. Both are updated annually to include an additional year of cancer diagnoses.
 ###### Statistics are calculated by linking the cancer registration data to treatment data tables for chemotherapy, tumour resections, and radiotherapy treatments.
-###### To find out more about the publication and the treatment data captured, visit the [cancer treatments page](https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments) on the NDRS website.
-###### The current Standard Operating Procedure (SOP) detailing the methodology can also be found here, or download the [current SOP](https://digital.nhs.uk/ndrs/our-work/ncras-work-programme/treatment-data/cas-sop-4.8) directly.
+###### To find out more about the publication and the treatment data captured, or to view and download the current Standard Operating Procedure (SOP) detailing the methodology, visit the [cancer treatments page](https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments) on the NDRS website.
 ###### To view and download the data via the interactive tools, visit the [Treatment by Demographic Factors](https://nhsd-ndrs.shinyapps.io/treatment_by_demographic_factors/) and [Treatment by Cancer Alliance](https://nhsd-ndrs.shinyapps.io/treatment_by_cancer_alliance/) dashboards.
 
 ##### To clone the repository:

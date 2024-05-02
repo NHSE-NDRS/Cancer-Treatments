@@ -42,7 +42,7 @@ get_percentages_and_confidence_intervals = function(numerators, denominators){
 
 data<- read.csv("geography.csv", stringsAsFactors = TRUE)
 ### INPUT for years of diagnosis the app is covering
-years<-c("2013", "2014", "2015", "2016", "2017", "2018","2019","2020")
+years<-c("2013", "2014", "2015", "2016", "2017", "2018","2019","2020","2021")
 
 
 #Function to create 3 year rolling years as used in geog app.
@@ -79,6 +79,7 @@ ui <- fluidPage(
       pickerInput(inputId = "cancer",
                   label = "Select Cancer Type",
                   choices = as.list(levels(data$cancergroup)),
+                  selected = "All malignant neoplasms with surgery defined",
                   multiple = FALSE),
       pickerInput(inputId = "alliance",
                   label = "Select Alliance of Interest",
@@ -90,13 +91,16 @@ ui <- fluidPage(
                   choices = as.list(levels(data$year_range)),
                   multiple = FALSE),
       
-      strong(paste0("This website presents the numbers and percentages of tumours diagnosed in England in ",min(years),"-",max(years)," recorded as receiving radiotherapy, chemotherapy or tumour resection. The results are presented by cancer Alliance, and compared to England as a benchmark.")),
+      strong(paste0("This website presents the proportion of tumours diagnosed in England in ",min(years),"-",max(years)," recorded as receiving radiotherapy, chemotherapy or tumour resection as part of the primary course of treatment following diagnosis.")),
+      br(),
+      p("Please select from the drop-down lists above to view graphs for a specific cancer site, year of diagnosis, and cancer alliance."),
+      br(),
+      p("Select each of the tabs to view graphs for the treatments independently or combined."),
+      br(),
+      strong(paste0("Please see the ‘Information’ tab for a more detailed description of the data presented.")),
       br(),
       br(),
-      p("The methodology is described in the standard operating procedure ", a("CAS-SOP #4.8 Linking treatment tables - chemotherapy, tumour resections and radiotherapy.", href="https://digital.nhs.uk/ndrs/our-work/ncras-work-programme/treatment-data"), em("(Please note this link may not load in all browsers).")),
-      p("Analytical notes:"),
-      p("Other care represents the group of patients who had no record of chemotherapy, tumour resection, or radiotherapy in the time frame assessed. This may include patients who received other treatments (such as hormonal therapy or management of symptoms), treatment outside of the time frame assessed, treatment in a private setting, or there may be data missing from the datasets used."),
-      p("Tumour resections have been defined for 28 malignant sites and 4 benign sites."),
+      p("The methodology is described in the standard operating procedure ", a("CAS-SOP v4.9 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"), em("(Please note this link may not load in all browsers).")),
       br(),
       strong("Click below to download a copy of the data, and for TIFF outputs of the graphs:"),
       br(),
@@ -110,13 +114,12 @@ ui <- fluidPage(
       br(),
       downloadLink('downloadGraph2', 'Export Graph for Treatment Combination'),
       br(),
-      #downloadLink('downloadGraph3', 'Export Graph for Treatment Combination'),
-      #br(),
       br(),
-      em("This work has been produced as part of the Cancer Research UK - NHS England Partnership."),
+      em("This tool is produced by the National Disease Registration Service (NDRS), as part of the Cancer Research UK - NHS England Partnership."),
       br(),
-      em("This work uses data collected by the NHS, as part of the care and support of cancer patients.")
-    ),  
+      br(),
+      em("This work uses data that has been provided by patients and collected by the NHS as part of their care and support. The data is collated, maintained and quality assured by the National Disease Registration Service, which is part of NHS England.")
+      ),  
     
     # Show a plot of the generated distribution
     mainPanel(
@@ -173,7 +176,18 @@ shovegraphintofunction1 = function(input) {
     asurgery_frame = c(asurgery_totals, get_percentages_and_confidence_intervals(asurgery_numerators, asurgery_denominators))
     asurgery_frame$Treatment = "Tumour resection"
     
-  if (input$cancer == "Other: Malignant neoplasms"| input$cancer == "Other: Non-malignant neoplasms"){    
+  if (input$cancer == "Other: Malignant neoplasms"| input$cancer == "Other: Non-malignant neoplasms" 
+      | input$cancer == "All haematological malignancies (experimental)"
+      | input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)" 
+      | input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)" 
+      | input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)" 
+      | input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)" 
+      | input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)" 
+      | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)" 
+      | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+      | input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)"
+      | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+      | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"){    
     alliancedata = rbind(as.data.frame(achemo_frame), as.data.frame(aradio_frame))    
   }
     else {alliancedata = rbind(as.data.frame(achemo_frame), as.data.frame(asurgery_frame), as.data.frame(aradio_frame))}
@@ -217,7 +231,18 @@ shovegraphintofunction1 = function(input) {
     esurgery_frame = c(esurgery_totals, get_percentages_and_confidence_intervals(esurgery_numerators, esurgery_denominators))
     esurgery_frame$Treatment = "Tumour resection"
     
-if (input$cancer == "Other: Malignant neoplasms"| input$cancer == "Other: Non-malignant neoplasms"){        
+if (input$cancer == "Other: Malignant neoplasms"| input$cancer == "Other: Non-malignant neoplasms"
+    | input$cancer == "All haematological malignancies (experimental)"
+    | input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)" 
+    | input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)" 
+    | input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)" 
+    | input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)" 
+    | input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)" 
+    | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)" 
+    | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+    | input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)"
+    | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+    | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"){        
   englanddata = rbind(as.data.frame(echemo_frame), as.data.frame(eradio_frame))
 } else {
   englanddata = rbind(as.data.frame(echemo_frame), as.data.frame(esurgery_frame), as.data.frame(eradio_frame))
@@ -241,8 +266,27 @@ if (input$cancer == "Other: Malignant neoplasms"| input$cancer == "Other: Non-ma
 output = ggplot(plottingdata, aes(displayvar, ratio, fill = Treatment)) +
     geom_bar(stat = "identity", position = "dodge") + 
     geom_errorbar(position = position_dodge(0.9), aes(ymin = lowers, ymax = uppers), width = 0.3) + 
-    labs(x = "Geography", title = ifelse(input$cancer=="All defined malignant neoplasms"| input$cancer=="Other: Malignant neoplasms", paste0(input$cancer, " in ",input$alliance, ", ", input$year, "\n Treatments are presented independently"),paste0(input$cancer, " cancer in ",input$alliance, ", ", input$year, "\n Treatments are presented independently")), 
-         caption = ifelse(input$cancer %in% c("Skin: BCC (experimental)", "Skin: cSCC (experimental)"), paste("This work has been produced as part of the Cancer Research UK - NHS England Partnership \n Figures for non-melanoma skin cancers are currently experimental and likely undercount surgical tumour resections"), paste("This work has been produced as part of the Cancer Research UK - NHS England Partnership")))+
+    labs(x = "Geography", 
+         title = ifelse((input$cancer=="All malignant neoplasms with surgery defined"
+                        | input$cancer=="All non-malignant neoplasms with surgery defined"
+                        | input$cancer == "Other: Malignant neoplasms"
+                        | input$cancer == "Other: Non-malignant neoplasms"
+                        | input$cancer == "All haematological malignancies (experimental)"
+                        | input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)" 
+                        | input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)" 
+                        | input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)" 
+                        | input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)" 
+                        | input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)" 
+                        | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)" 
+                        | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+                        | input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)"
+                        | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+                        | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"
+                        | input$cancer == "Cholangiocarcinoma (experimental)"), 
+                        paste(paste0(strwrap(gsub("Haematological malignancy: ","",input$cancer),60),collapse="\n"),"\n",input$alliance,", ",input$year, "\nTreatments are presented independently"),
+                        paste0(input$cancer, " cancer","\n",input$alliance, ", ", input$year, "\nTreatments are presented independently")), 
+         caption = ifelse(input$cancer %in% c("Skin: BCC (experimental)", "Skin: cSCC (experimental)"), 
+                          paste("This work has been produced as part of the Cancer Research UK - NHS England Partnership \n Figures for non-melanoma skin cancers are currently experimental and likely undercount surgical tumour resections"), paste("This work has been produced as part of the Cancer Research UK - NHS England Partnership")))+
     scale_y_continuous(breaks=c(0,0.1, 0.2, 0.3, 0.4,0.5,0.6,0.7,0.8,0.9, 1), labels = scales::percent, name = "Proportion of tumours (95% confidence interval)", limits = c(0, 1)) +
     #    scale_x_discrete(labels = c("Alliance", "England")) + 
     scale_fill_manual(name = "", values = c("Chemotherapy" = "#92D050", "Tumour resection" = "#00B0F0", "Radiotherapy" = "#FFC000")) +
@@ -359,8 +403,26 @@ shovegraphintofunction2 = function(input) {
     
     stacked_treatments_plot = ggplot(treatments_and_ratios, aes(displayvar, ratio, fill = treatment_combinations)) +
       geom_bar(position = position_stack(reverse = TRUE),stat="identity", aes(fill = treatment_combinations)) +
-      labs(x="Geography", title = ifelse(input$cancer=="All defined malignant neoplasms",paste0(input$cancer, " in ", input$alliance, ", ", input$year, "\n Treatments are presented in combinations as a stacked bar chart") ,paste0(input$cancer, " cancer in ", input$alliance," ", input$year,"\nTreatments are presented in combinations as a stacked bar chart")), 
-           caption = ifelse(input$cancer %in% c("Skin: BCC (experimental)", "Skin: cSCC (experimental)"), paste("This work has been produced as part of the Cancer Research UK - NHS England Partnership \n Figures for non-melanoma skin cancers are currently experimental and likely undercount surgical tumour resections"), paste("This work has been produced as part of the Cancer Research UK - NHS England Partnership")))+
+      labs(x="Geography", title = ifelse((input$cancer=="All malignant neoplasms with surgery defined"
+                                         | input$cancer=="All non-malignant neoplasms with surgery defined"
+                                         | input$cancer == "Other: Malignant neoplasms"
+                                         | input$cancer == "Other: Non-malignant neoplasms"
+                                         | input$cancer == "All haematological malignancies (experimental)"
+                                         | input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)" 
+                                         | input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)" 
+                                         | input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)" 
+                                         | input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)" 
+                                         | input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)" 
+                                         | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)" 
+                                         | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+                                         | input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)"
+                                         | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+                                         | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"
+                                         | input$cancer == "Cholangiocarcinoma (experimental)"),
+                         paste(paste0(strwrap(gsub("Haematological malignancy: ","",input$cancer),60),collapse="\n"),"\n",input$alliance,", ",input$year, "\nTreatments are presented in combinations as a stacked bar chart"),
+                         paste0(input$cancer, " cancer","\n",input$alliance, ", ", input$year, "\nTreatments are presented in combinations as a stacked bar chart")), 
+             caption = ifelse(input$cancer %in% c("Skin: BCC (experimental)", "Skin: cSCC (experimental)"), 
+                            paste("This work has been produced as part of the Cancer Research UK - NHS England Partnership \n Figures for non-melanoma skin cancers are currently experimental and likely undercount surgical tumour resections"), paste("This work has been produced as part of the Cancer Research UK - NHS England Partnership")))+
       scale_y_continuous(breaks=c(0,0.1, 0.2, 0.3, 0.4,0.5,0.6,0.7,0.8,0.9, 1), labels = scales::percent, name = "Proportion of tumours (95% confidence interval)", limits = c(0, 1)) +
       #scale_x_discrete(limits = treatments_and_ratios$value) +
       scale_fill_manual(name = "", values = c("Other care" = "#BFBFBF", "Chemotherapy only" = "#92D050",
@@ -405,13 +467,58 @@ server <- function(input, output) {
   
   output$downloadData1 <- downloadHandler(
     filename = function() {
-      if (input$cancer=="All defined malignant neoplasms" | input$cancer == "Other: Malignant neoplasms" | input$cancer == "All defined non-malignant neoplasms" | input$cancer == "Lung: Non-small cell lung cancer" | input$cancer == "Lung: Small cell lung cancer" | input$cancer == "Other: Non-malignant neoplasms" | input$cancer == "Skin: BCC (experimental)" | input$cancer == "Skin: cSCC (experimental)" | input$cancer == "Skin: Rare") {
-          paste('NCRAS-CRUK - Independent treatment data for ', sapply(input$cancer,tolower), ' in ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+      if (input$cancer=="All malignant neoplasms with surgery defined" | 
+          input$cancer == "All non-malignant neoplasms with surgery defined" | 
+          input$cancer == "All defined non-malignant neoplasms" |
+          input$cancer == "All malignant neoplasms with surgery defined, excluding BCC, cSSC and rare skin cancers" | 
+          input$cancer == "Lung: Non-small cell lung cancer" | 
+          input$cancer == "Lung: Small cell lung cancer" | 
+          input$cancer == "Other: Malignant neoplasms" | 
+          input$cancer == "Other: Non-malignant neoplasms" | 
+          input$cancer == "Skin: BCC (experimental)" | 
+          input$cancer == "Skin: cSCC (experimental)" | 
+          input$cancer == "Skin: Rare" 
+          | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)"
+          | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+          | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+          | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"
+          | input$cancer == "Cholangiocarcinoma (experimental)") {
+          paste('NCRAS-CRUK - Independent treatment data for ', sapply(gsub("Haematological malignancy: ", "",input$cancer),tolower), ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
           str_remove(., ":")
       }  
       
+      else if (input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)") {
+        paste('NCRAS-CRUK - Independent treatment data for ', 'ALL (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+        str_remove(., ":")
+      }
+
+      else if (input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)") {
+        paste('NCRAS-CRUK - Independent treatment data for ', 'AML (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)") {
+        paste('NCRAS-CRUK - Independent treatment data for ', 'CLL or SLL (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)") {
+        paste('NCRAS-CRUK - Independent treatment data for ', 'CML (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)") {
+        paste('NCRAS-CRUK - Independent treatment data for ', 'DLBCL and other high grade mature B-cell neoplasms (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)") {
+        paste('NCRAS-CRUK - Independent treatment data for ', 'MCL (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
       else {
-        paste('NCRAS-CRUK - Independent treatment data for ', sapply(input$cancer,tolower), ' cancer in ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+        paste('NCRAS-CRUK - Independent treatment data for ', sapply(input$cancer,tolower), ' cancer ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
           str_remove(., ":")
       }
     },
@@ -449,7 +556,18 @@ server <- function(input, output) {
         asurgery_frame = c(asurgery_totals, get_percentages_and_confidence_intervals(asurgery_numerators, asurgery_denominators))
         asurgery_frame$Treatment = "Tumour resection"
       
-        if (input$cancer == "Other: Malignant neoplasms" | input$cancer == "Other: Non-malignant neoplasms"){        
+        if (input$cancer == "Other: Malignant neoplasms" | input$cancer == "Other: Non-malignant neoplasms"
+            | input$cancer == "All haematological malignancies (experimental)"
+            | input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)" 
+            | input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)" 
+            | input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)" 
+            | input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)" 
+            | input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)" 
+            | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)" 
+            | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+            | input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)"
+            | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+            | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"){        
           alliancedata = rbind(as.data.frame(achemo_frame), as.data.frame(aradio_frame))
         } else {
           alliancedata = rbind(as.data.frame(achemo_frame), as.data.frame(asurgery_frame), as.data.frame(aradio_frame))
@@ -464,7 +582,7 @@ server <- function(input, output) {
       # Create the subset of the data based on drop-downs of cancer type alone -- aggregating across England   
       edata_by_year = data[data$cancergroup == input$cancer,]
       #edata_by_year = data[data$cancergroup == "Bladder",]
-      edata_by_year = data[edata_by_year$year_range == input$year,]
+      edata_by_year = edata_by_year[edata_by_year$year_range == input$year,]
       edata_by_year$dummyvar <- 1
 
       
@@ -491,7 +609,18 @@ server <- function(input, output) {
         esurgery_frame$Treatment = "Tumour resection"
 #      }
         
-        if (input$cancer == "Other: Malignant neoplasms" | input$cancer == "Other: Non-malignant neoplasms"){        
+        if (input$cancer == "Other: Malignant neoplasms" | input$cancer == "Other: Non-malignant neoplasms"
+            | input$cancer == "All haematological malignancies (experimental)"
+            | input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)" 
+            | input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)" 
+            | input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)" 
+            | input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)" 
+            | input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)" 
+            | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)" 
+            | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+            | input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)"
+            | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+            | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"){        
           englanddata = rbind(as.data.frame(echemo_frame), as.data.frame(eradio_frame))
         } else {
           englanddata = rbind(as.data.frame(echemo_frame), as.data.frame(esurgery_frame), as.data.frame(eradio_frame))
@@ -534,13 +663,60 @@ server <- function(input, output) {
   output$downloadData2 <- downloadHandler(
     filename = function() {
       #if (input$cancer=="All malignant neoplasms" | input$cancer == "Other: Malignant neoplasms") {
-      if (input$cancer=="All defined malignant neoplasms" | input$cancer == "Other: Malignant neoplasms" | input$cancer == "All defined non-malignant neoplasms" | input$cancer == "Lung: Non-small cell lung cancer" | input$cancer == "Lung: Small cell lung cancer" | input$cancer == "Other: Non-malignant neoplasms" | input$cancer == "Skin: BCC (experimental)" | input$cancer == "Skin: cSCC (experimental)" | input$cancer == "Skin: Rare") {
-        paste('NCRAS-CRUK - Treatment combination data for ', sapply(input$cancer,tolower), ' in ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+      if (input$cancer=="All malignant neoplasms with surgery defined" | 
+          input$cancer == "All non-malignant neoplasms with surgery defined" | 
+          input$cancer == "All defined non-malignant neoplasms" | 
+          input$cancer == "All malignant neoplasms with surgery defined, excluding BCC, cSSC and rare skin cancers" | 
+          input$cancer == "Lung: Non-small cell lung cancer" | 
+          input$cancer == "Lung: Small cell lung cancer" | 
+          input$cancer == "Other: Malignant neoplasms" | 
+          input$cancer == "Other: Non-malignant neoplasms" | 
+          input$cancer == "Skin: BCC (experimental)" | 
+          input$cancer == "Skin: cSCC (experimental)" | 
+          input$cancer == "Skin: Rare"
+          | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)"
+          | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+          | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+          | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"
+          | input$cancer == "Cholangiocarcinoma (experimental)") {
+        paste('NCRAS-CRUK - Treatment combination data for ', sapply(gsub("Haematological malignancy: ", "",input$cancer),tolower), ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
           str_remove(., ":")
         
       }
+      
+      else if (input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)") {
+        paste('NCRAS-CRUK - Treatment combination data for ', 'ALL (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)") {
+        paste('NCRAS-CRUK - Treatment combination data for ', 'AML (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)") {
+        paste('NCRAS-CRUK - Treatment combination data for ', 'CLL or SLL (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)") {
+        paste('NCRAS-CRUK - Treatment combination data for ', 'CML (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)") {
+        paste('NCRAS-CRUK - Treatment combination data for ', 'DLBCL and other high grade mature B-cell neoplasms (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      else if (input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)") {
+        paste('NCRAS-CRUK - Treatment combination data for ', 'MCL (experimental)', ' ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+          str_remove(., ":")
+      }
+      
+      
       else {
-        paste('NCRAS-CRUK - Treatment combination data for ', sapply(input$cancer,tolower), ' cancer in ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
+        paste('NCRAS-CRUK - Treatment combination data for ', sapply(input$cancer,tolower), ' cancer ',input$alliance, ' ',input$year,' ', Sys.Date(), '.csv', sep='') %>%
           str_remove(., ":")
       }
     },
@@ -648,6 +824,7 @@ server <- function(input, output) {
         treatments_and_ratios$'Treatment modality' <- NULL
         treatments_and_ratios$'Cancer type' <- NULL
         treatments_and_ratios$'Geography' <- NULL
+        treatments_and_ratios[1] <- NULL
         
         write.csv(treatments_and_ratios, con, row.names=FALSE)
       }
@@ -687,13 +864,36 @@ server <- function(input, output) {
   
   output$downloadGraph1 <- downloadHandler(
     filename = function() {
-      if (input$cancer=="All defined malignant neoplasms" | input$cancer == "Other: Malignant neoplasms") {
-        paste('NCRAS-CRUK - Independent treatment graph for ', sapply(input$cancer,tolower), ' in ',input$alliance,' ',input$year,' ', Sys.Date(), '.tiff', sep='') %>%
+      if (input$cancer=="All malignant neoplasms with surgery defined" | 
+          input$cancer == "All non-malignant neoplasms with surgery defined" | 
+          input$cancer == "All malignant neoplasms with surgery defined, excluding BCC, cSSC and rare skin cancers" | 
+          input$cancer == "All defined non-malignant neoplasms" |
+          input$cancer == "Other: Malignant neoplasms" | 
+          input$cancer == "Other: Non-malignant neoplasms" | 
+          input$cancer == "Lung: Non-small cell lung cancer" | 
+          input$cancer == "Lung: Small cell lung cancer" | 
+          input$cancer == "Other: Malignant neoplasms" | 
+          input$cancer == "Other: Non-malignant neoplasms" | 
+          input$cancer == "Skin: BCC (experimental)" | 
+          input$cancer == "Skin: cSCC (experimental)" | 
+          input$cancer == "Skin: Rare"| 
+          input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)" 
+          | input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)" 
+          | input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)" 
+          | input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)" 
+          | input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)" 
+          | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)"
+          | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+          | input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)"
+          | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+          | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"
+          | input$cancer == "Cholangiocarcinoma (experimental)") {
+        paste('NCRAS-CRUK - Independent treatment graph for ', sapply(gsub("Haematological malignancy: ", "",input$cancer),tolower), ' ',input$alliance,' ',input$year,' ', Sys.Date(), '.tiff', sep='') %>%
           str_remove(., ":")
         
       }
       else {
-        paste('NCRAS-CRUK - Independent treatment graph for ', sapply(input$cancer,tolower), ' cancer in ',input$alliance,' ',input$year,' ', Sys.Date(), '.tiff', sep='') %>%
+        paste('NCRAS-CRUK - Independent treatment graph for ', sapply(input$cancer,tolower), ' cancer ',input$alliance,' ',input$year,' ', Sys.Date(), '.tiff', sep='') %>%
           str_remove(., ":")
       }
     },
@@ -706,13 +906,32 @@ server <- function(input, output) {
   
   output$downloadGraph2 <- downloadHandler(
     filename = function() {
-      if (input$cancer=="All defined malignant neoplasms" | input$cancer == "Other: Malignant neoplasms") {
-        paste('NCRAS-CRUK - Treatment combination graph for ', sapply(input$cancer,tolower), ' in ',input$alliance,' ',input$year,' ', Sys.Date(), '.tiff', sep='') %>%
+      if (input$cancer=="All malignant neoplasms with surgery defined" | 
+          input$cancer == "All non-malignant neoplasms with surgery defined" | 
+          input$cancer == "All defined non-malignant neoplasms" | 
+          input$cancer == "All malignant neoplasms with surgery defined, excluding BCC, cSSC and rare skin cancers" | 
+          input$cancer == "Lung: Non-small cell lung cancer" | 
+          input$cancer == "Lung: Small cell lung cancer" | 
+          input$cancer == "Skin: BCC (experimental)" | 
+          input$cancer == "Skin: cSCC (experimental)" | 
+          input$cancer == "Skin: Rare"| 
+          input$cancer == "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)" 
+          | input$cancer == "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)" 
+          | input$cancer == "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)" 
+          | input$cancer == "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)" 
+          | input$cancer == "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)" 
+          | input$cancer == "Haematological malignancy: Follicular Lymphoma (experimental)"
+          | input$cancer == "Haematological malignancy: Hodgkin Lymphoma (experimental)" 
+          | input$cancer == "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)"
+          | input$cancer == "Haematological malignancy: Myeloma (experimental)" 
+          | input$cancer == "Haematological malignancy: Other haematological malignancies (experimental)"
+          | input$cancer == "Cholangiocarcinoma (experimental)") {
+        paste('NCRAS-CRUK - Treatment combination graph for ', sapply(gsub("Haematological malignancy: ", "",input$cancer),tolower),' ',input$alliance,' ',input$year,' ', Sys.Date(), '.tiff', sep='') %>%
           str_remove(., ":")
         
       }
       else {
-        paste('NCRAS-CRUK - Treatment combination graph for ', sapply(input$cancer,tolower), ' cancer in ',input$alliance,' ',input$year,' ', Sys.Date(), '.tiff', sep='') %>%
+        paste('NCRAS-CRUK - Treatment combination graph for ', sapply(input$cancer,tolower), ' cancer ',input$alliance,' ',input$year,' ', Sys.Date(), '.tiff', sep='') %>%
           str_remove(., ":")
       }
     },
@@ -726,29 +945,56 @@ server <- function(input, output) {
   ##Create explanatory text for explanation tab
   
   output$text <- renderUI({
-    str1 <- p("This work aims to provide basic information on the percentage of tumours receiving chemotherapy, radiotherapy and / or a surgical tumour resection as part of the primary course of treatment following diagnosis. The proportion of tumours receiving each treatment is presented, unadjusted for any factors that may affect treatment such as stage, age, gender, deprivation, ethnicity, and comorbidities.")
-    str2 <- p("The method used to ascertain treatment information is described in the standard operating procedure CAS-SOP 4.8 Linking treatment tables - chemotherapy, tumour resections and radiotherapy.")
-    str3 <- strong("Datasets:")
-    str4 <- p("Datasets used to capture treatment information include cancer registration data, the Systemic Anti-Cancer Therapy dataset (SACT), RadioTherapy DataSet (RTDS), and inpatient Hospital Episode Statistics (HES).")
-    str5 <- p("If a patient has been diagnosed with only one cancer or with multiple cancers diagnosed over 18 months apart, then all of the above datasets are used to identify treatment data. However,  if the patient has been diagnosed with multiple cancers within 18 months then only the cancer registration data has been used. This is because cancer registration staff have linked tumours to specific treatments, whereas the other datasets are at the patient level. Presence of the three treatment types was flagged, without regard to the order of treatments, or whether treatments were delivered together.")
-  #  str6 <- p("For a small number of patients whose follow up period for radiotherapy extended past April 2016, data was supplemented from a new radiotherapy dataset that is still being tested. A sensitivity analysis that included and excluded this dataset showed that the impact of any errors would affect results by up to 0.5 percentage points for all malignant cancers combined (including up to 1.5 and 1.2 percentage points for breast and prostate cancers, respectively). Radiotherapy figures are likely to be an underestimate as there is underreporting of teletherapy in both RTDS datasets, and data may be incomplete for selected NHS Trusts.")
-    str7 <- strong("Treatment definitions:")
-    str8 <- p("A tumour resection is an attempt to surgically remove the whole of the primary tumour. These have been identified using OPCS-4 codes  through consultation with site-specific clinicians.  For the following cancer sites, some procedures (for example, endoscopic resections) have been identified as tumour resections in early stage disease only: colon, rectum, cervical, bladder, stomach, oesophagus and liver.")
-    str9 <- p("Surgical tumour resections are not defined for all cancer sites. Only sites which have a defined list of tumour resection procedures will be grouped.  Tumour resections have not been defined for any of the cancer sites included in the \"Other: Malignant neoplasms\" or \"Other: Non-malignant neoplasms\" categories. However, some of these tumours could have been treated with surgery.")
-    str10 <- p("Radiotherapy includes both curative and palliative teletherapy procedures, and excludes brachytherapy and contact radiotherapy.")
-    str11 <- p("Chemotherapy includes both curative and palliative chemotherapy, and excludes hormonal therapy, and other supportive drugs such as zoledronic acid, pamidronate, and denosumab.")
-    str12 <- p("The tumours in the \"Other care\" category may have received treatment other than chemotherapy, radiotherapy and tumour resection (such as hormonal therapy or management of symptoms); treatment outside of the time frame assessed; treatment in a private setting; or there may be data missing from the datasets used.")
-    str13 <- strong("Cohort:")
-    str14 <- p(paste0("All patients diagnosed with malignant cancer in England in ",min(years),"-",max(years),", excluding males with gynaecological cancer and females with prostate cancer. Death certificate only registrations are included (0.1% of the cohort with a known Route to Diagnosis)."))
+    str0 <- strong("Introduction")
+    str1 <- p("This work aims to provide basic information on the percentage of tumours receiving chemotherapy, radiotherapy and / or a surgical tumour resection as part of the primary course of treatment following diagnosis.")
+    str2 <- p("These statistics on cancer treatments aim to support the understanding of how patients are treated for their cancer diagnosis and how this varies between cancer sites. This understanding is vital to assess variation and make improvements to treatment pathways.")
+    str3 <- strong("Methodology")
+    str4 <- p("The methodology is described in the standard operating procedure ", a("CAS-SOP v4.9 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"), em("(Please note this link may not load in all browsers)."))
+    str5 <- strong("Datasets:")
+    str6 <- p(paste0("Patients diagnosed with cancer in England in ",min(years),"-",max(years),", excluding males with gynaecological cancer and females with prostate cancer, were selected from the National Cancer Registration and Analysis dataset. Death certificate only registrations are included (1% of the cohort)."))
+    str7 <- p("Datasets used to capture treatment information include cancer registration data, the Systemic Anti-Cancer Therapy dataset (SACT), RadioTherapy DataSet (RTDS), and inpatient and outpatient Hospital Episode Statistics (HES).")
+    str8 <- p("Where a patient has been diagnosed with one or with multiple cancers within 18 months, then all of the above treatment datasets are used to identify treatment data. However, if the patient has been diagnosed with multiple cancers within 18 months then only the tumour linked cancer registration treatment data has been used. This is because SACT, RTDS and HES can only be linked at patient level so the precise tumour that a treatment relates to is not identified, only the person.")
+    str9 <- strong("Treatment definitions:")
+    str10 <- p("A tumour resection is an attempt to surgically remove the whole of the primary tumour. These have been identified using OPCS-4 codes through consultation with site-specific clinicians. For the following cancer sites, some procedures (for example, endoscopic resections) have been identified as tumour resections in early-stage disease only: colon, rectum, cervical, bladder, stomach, oesophagus and liver excluding intrahepatic cholangiocarcinoma.")
+    #        str13 <- p("Tumour resections have been defined for 48 malignant sites and 4 benign sites.")
+    str11 <- p("Surgical tumour resections are not defined for all cancer sites. Only sites which have a defined list of tumour resection procedures will be grouped. Surgical tumour resections have not been defined for any of the cancer sites included in the 'Other: Malignant neoplasms', 'Other: Non-malignant neoplasms' or any of the 'Haematological malignancy' groups. However, some of these tumours could have been treated with surgery.")
+    str12 <- p("Radiotherapy includes both curative and palliative teletherapy procedures, and brachytherapy, and excludes contact radiotherapy")
+    str13 <- p("Chemotherapy includes both curative and palliative chemotherapy, and excludes hormonal therapy, and other supportive drugs such as zoledronic acid, pamidronate, and denosumab. Chemotherapy treatment data is extracted from HES inpatient and outpatient data, in addition to NCRD and SACT.")
+    str14 <- p("Other care represents the group of patients who had no record of chemotherapy, tumour resection, or radiotherapy in the time frame assessed. This may include patients who received other treatments (such as hormonal therapy or management of symptoms), treatment outside of the time frame assessed, treatment in a private setting, or there may be data missing from the datasets used. Other care for haematological subsites may also include patients who have undergone tumour resection treatment as surgery has not yet been defined for these cancers.")
     str15 <- strong("Time period:")
-    str16 <- p(paste0("Treatments occurring in the period from 1 month before diagnosis to either  6, 9, 12, 15 or 18 months after diagnosis are displayed for tumours diagnosed in ",min(years)," to ",max(years),". The time period within which the majority of first course of treatments occurred varies by cancer site and treatment type. Therefore, an appropriate time period for each cancer site has been chosen using a data-driven approach in consultation with clinicians. Where a time period of 18 months has been used, some tumours diagnosed in 2015 will not yet have surgery data recorded in HES, so the percentage receiving a tumour resection may be an underestimate. For more information, and a sensitivity analysis showing the effect of varying the time periods, see the CAS-SOP 4.8."))
-    str17 <- strong("Staging:")
-    str18 <- p("Stage breakdowns use TNM staging, except gynaecological cancers which use Figo staging. For ovarian, uterine and vulval cancers, TNM stage has been used where Figo stage was unknown. Figo substages were collated into Figo stages 1, 2, 3, 4, and unknown.  The final recorded stage of a tumour is derived by the registration service using all information available up to 3 months after diagnosis. For this reason, the tumour stage shown in this data may be different to the stage originally available to the clinician when deciding a course of treatment, as it may have been subsequently updated following removal of the tumour and pathology results.")
-    str19 <- strong("Known issues:")
-    str20 <- p("For pancreatic tumours, a much lower proportion of early stage tumours are recorded to have been resected than expected. Feedback from clinical experts highlighted that this does not fit with clinical experience, so further investigation is needed to understand whether all resections are being captured by the data and methodology.")
-    str21 <- p("Figures for non-melanoma skin cancers (NMSC) are currently experimental and likely to be undercount surgical tumour resections")
-    HTML(paste(str1, str3, str4, str5, str7, str8, str9, str10, str11, str12, str13, str14, str15, str16, str17, str18, str19, str20, str21, sep = ' '))
+    str16 <- p(paste("Treatments occurring in the period from 1 month before diagnosis to either 6, 9, 12, 15 or 18 months after diagnosis are displayed for tumours diagnosed in ",min(years),"-",max(years),". The time period within which the majority of first course of treatments occurred varies by cancer site and treatment type. Therefore, an appropriate time period for each cancer site has been chosen using a data-driven approach in consultation with clinicians."))
+    str16a <- p("For more information, and a sensitivity analysis showing the effect of varying the time periods, see", a("CAS-SOP v4.9 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"))
+    str17 <- strong("Known issues:")
+    str18 <- p("For pancreatic tumours, a much lower proportion of early-stage tumours are recorded to have been resected than expected. Feedback from clinical experts highlighted that this does not fit with clinical experience, so further investigation is needed to understand whether all resections are being captured by the data and methodology.")
+    str19 <- p("Figures for non-melanoma skin cancers (NMSC) are currently experimental and likely to be undercounting surgical tumour resections.")
+    str20 <- strong("How to use the app:")
+    str21 <- p("The unadjusted proportion of tumours receiving each treatment, and combination of treatments, is presented.")
+    str22 <- p("Independent treatments: The proportion of tumours receiving radiotherapy, chemotherapy and / or tumour resection presented independently.")
+    str23 <- p("Treatment combinations: The proportion of tumours receiving radiotherapy, chemotherapy and / or tumour resection presented as the following combinations:")
+    str24 <- p(tags$ol(
+      tags$li("Tumour resection, radiotherapy and chemotherapy"), 
+      tags$li("Tumour resection and radiotherapy"), 
+      tags$li("Tumour resection and chemotherapy"),
+      tags$li("Chemotherapy and radiotherapy"),
+      tags$li("Radiotherapy only"),
+      tags$li("Tumour resection only"),
+      tags$li("Chemotherapy only"),
+      tags$li("Other care")
+    ))       
+    str25 <- p("The data may be viewed broken down by cancer site, year of diagnosis and cancer alliance.")
+    str26 <- p("Please select from the drop-down lists in the sidebar on the left-hand side of this screen to view graphs for a specific cancer site, year of diagnosis, and cancer alliance. Select ‘year of cancer diagnosis’ as the factor of interest if you would do not wish to see the data presented by any of the breakdowns.")
+    str27 <- p("Select the ‘Overall’ tab to view the proportion of tumours receiving each of the treatments, presented independently and combined, for each cancer site and year of diagnosis. The data on these tabs is not displayed by the factor of interest.")
+    str28 <- p("Select the ‘Independent treatment’ tab to view the proportion of tumours receiving radiotherapy, chemotherapy and / or tumour resection, presented by the selected cancer site and year of diagnosis and factor of interest.")
+    str29 <- p("Select the ‘Stacked Treatment Combinations’ tab to view the proportion of tumours receiving radiotherapy, chemotherapy and / or tumour resection combinations, presented by the selected cancer site and year of diagnosis and factor of interest as a stacked bar chart, or the ‘Treatment Combinations’ tab to view this as an unstacked bar chart.  Note that treatment combinations for haematological malignancies are only based on radiotherapy and chemotherapy, and do not include tumour resection.")
+    str30 <- p("Download the data for each of the graphs, and a TIFF image of each of the graphs using the links in the sidebar on the left hand side of this screen.")
+    str31 <- strong("Feedback and support")
+    str32 <- p("This tool is produced by the National Disease Registration Service (NDRS), as part of the Cancer Research UK - NHS England Partnership.")
+    str33 <- p(" Please send any feedback or queries to ndrsenquiries@nhs.net. Please do not include sensitive or patient identifiable information.")
     
+    HTML(paste(str0, str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, 
+               str11, str12, str13, str14, str15, str16, str16a, str17, str18, str19, str20, 
+               str21, str22, str23, str24, str25, str26, str27, str28, str29,str30, 
+               str31, str32, str33, sep = ' '))
   })
   
   

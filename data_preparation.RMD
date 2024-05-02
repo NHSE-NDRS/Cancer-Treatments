@@ -1,6 +1,6 @@
 
 
-#This script takes data from the treatment flags table in the server (username.av_treatment_1320_4p8@server_name) and creates .csv files in the correct format for the cancerdata R Shiny app.
+#This script takes data from the treatment flags table in the server (username.av_treatment_1321_4p9@casref01) and creates .csv files in the correct format for the cancerdata R Shiny app.
 
 ```{r}
 library(tidyverse)
@@ -9,15 +9,25 @@ library(data.table)
 
 ```{r running notes}
 # Replace 'server' and 'username' throughout script before running
+#Ensure setwd points to a directory that contains the ojdbc7.jar and and oracle_connection.R files required to connect to the server from R
+```
+
+```{r set parameters}
+server = "casref01"
+username = "analysisnataliapetersen"
+knitr::opts_knit$set(root.dir = "N:/INFO/_LIVE/NCIN/Treatment Flags")
 ```
 
 ```{r connect to server}
 #Connect to server 
+CAS_username = "analysisnataliapetersen"
+R_to_CAS_directory = "N:/info/_LIVE/NCIN/GRAIL/"
+setwd(R_to_CAS_directory)
 source("oracle_connection.R")
-server_name = createConnection(sid = "", username = "") # replace 'server_name' before running and add parameters (note use of 'server_name' throughout script)
-#set place to save data
-setwd("directory_path") #Ensure this path points to a directory that contains the ojdbc7.jar and and oracle_connection.R files required to connect to the server from R 
 
+
+#Create CAS connection with CASREF01
+CAS_casref01 = createConnection(sid = "CASREF01", username = CAS_username)
 ```
 
 
@@ -26,7 +36,7 @@ setwd("directory_path") #Ensure this path points to a directory that contains th
 ```{r get demographic factors from server}
 #Demographic factors
 
-demography<- as_tibble(dbGetQueryOracle(server_name, "select cancergroup
+demography<- as_tibble(dbGetQueryOracle(CAS_casref01, "select cancergroup
 , 'Age at cancer diagnosis' as factor
 , case when age <50 then 'U50'
        when age BETWEEN 50 AND 59 then '50-59'
@@ -39,7 +49,7 @@ demography<- as_tibble(dbGetQueryOracle(server_name, "select cancergroup
 , rt_flag
 , sg_flag
 , count(tumourid) as tumour_count
-from username.av_treatment_1320_4p8
+from analysisnataliapetersen.treatment_table_1321_4p9
 group by cancergroup, case when age <50 then 'U50'
        when age BETWEEN 50 AND 59 then '50-59'
        when age BETWEEN 60 AND 69 then '60-69'
@@ -63,7 +73,7 @@ select cancergroup
 , rt_flag
 , sg_flag
 , count(tumourid) as tumour_count
-from username.av_treatment_1320_4p8
+from analysisnataliapetersen.treatment_table_1321_4p9
 group by cancergroup, case when (ethnicity IN ('0', 'A', 'B', 'C', 'CA')) then 'White'
         when (ethnicity IN ('8', 'S','D', 'E', 'F', 'G')) then 'Other' --when (ethnicity IN ('D', 'E', 'F', 'G')) then 'Mixed'
         when (ethnicity IN ('H', 'J', 'K', 'L', 'R')) then 'Asian'
@@ -80,17 +90,19 @@ select cancergroup
        when chrl_tot_27_03 = 1 THEN '1'
        when chrl_tot_27_03 = 2 THEN '2'
        when chrl_tot_27_03 >= 3 THEN '3+'
+       else 'Unknown'
        end as value
 , diagnosisyear as year
 , ct_flag
 , rt_flag
 , sg_flag
 , count(tumourid) as tumour_count
-from username.av_treatment_1320_4p8
+from analysisnataliapetersen.treatment_table_1321_4p9
 group by cancergroup, case when chrl_tot_27_03 = 0 THEN '0'
        when chrl_tot_27_03 = 1 THEN '1'
        when chrl_tot_27_03 = 2 THEN '2'
        when chrl_tot_27_03 >= 3 THEN '3+'
+       else 'Unknown'       
        end, diagnosisyear, ct_flag, rt_flag, sg_flag
 
 union 
@@ -103,7 +115,7 @@ select cancergroup
 , rt_flag
 , sg_flag
 , count(tumourid) as tumour_count
-from username.av_treatment_1320_4p8
+from analysisnataliapetersen.treatment_table_1321_4p9
 group by cancergroup, imd_quintile_lsoas, diagnosisyear, ct_flag, rt_flag, sg_flag
 
 union
@@ -118,7 +130,7 @@ select cancergroup
 , rt_flag
 , sg_flag
 , count(tumourid) as tumour_count
-from username.av_treatment_1320_4p8
+from analysisnataliapetersen.treatment_table_1321_4p9
 group by cancergroup, case when gender = '1' THEN 'Male'
        when gender = '2' THEN 'Female'
        end, diagnosisyear, ct_flag, rt_flag, sg_flag
@@ -138,7 +150,7 @@ select cancergroup
 , rt_flag
 , sg_flag
 , count(tumourid) as tumour_count
-from username.av_treatment_1320_4p8
+from analysisnataliapetersen.treatment_table_1321_4p9
 group by cancergroup, case when substr(stage_best, 1, 1) = '1' THEN 'Stage 1'
        when substr(stage_best, 1, 1) = '2' THEN 'Stage 2'
        when substr(stage_best, 1, 1) = '3' THEN 'Stage 3'
@@ -156,13 +168,8 @@ select cancergroup
 , rt_flag
 , sg_flag
 , count(tumourid) as tumour_count
-from username.av_treatment_1320_4p8
+from analysisnataliapetersen.treatment_table_1321_4p9
 group by cancergroup, diagnosisyear, ct_flag, rt_flag, sg_flag"))
-```
-
-```{r}
-#remove data for vulva
-demography<-filter(demography,!CANCERGROUP=="VULVA")
 ```
 
 ```{r}
@@ -174,6 +181,8 @@ demographic_factors<- demography %>%
 demographic_factors$cancergroup<- demographic_factors$cancergroup %>%
     str_to_title() %>%
     str_replace_all("_", " ") %>%
+    str_replace("Benign Endocrine", "Benign endocrine") %>%
+    str_replace("Non-Benign endocrine", "Non-benign endocrine") %>%
     str_replace("Skin:keratinocyte Skin, Bcc", "Skin: BCC (experimental)") %>%
     str_replace("Skin:keratinocyte, Cscc", "Skin: cSCC (experimental)") %>%
     str_replace("Skin:non-Keratinocyte, Rare", "Skin: Rare") %>%
@@ -193,48 +202,74 @@ demographic_factors$cancergroup<- demographic_factors$cancergroup %>%
     str_replace("^Other Malignant$", "Other: Malignant neoplasms") %>%
     str_replace("Other Non-Malignant", "Other: Non-malignant neoplasms") %>%
     str_replace("Pancreas", "Pancreatic")%>%
-    str_replace("Non-Malignant Bladder", "Bladder: Non-malignant (experimental)")%>%
-    str_replace("Malignant Bladder", "Bladder: Malignant") 
-
+    str_replace("Non-Malignant Bladder", "Bladder: Non-malignant")%>%
+    str_replace("Malignant Bladder", "Bladder: Malignant") %>%
+    str_replace("Anal", "Anal (experimental)") %>%  
+    str_replace("Liver", "Liver excluding intrahepatic cholangiocarcinoma (experimental)") %>%
+    str_replace("Cholangiocarcinoma", "Cholangiocarcinoma (experimental)") %>%
+    str_replace("Gallbladder", "Gallbladder (experimental)") %>%
+    str_replace("Ampulla of vater", "Ampulla of Vater (experimental)") %>%
+    str_replace("Haem:acute Lymphoblastic Leukaemia \\(All\\)", "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)") %>%
+    str_replace("Haem:acute Myeloid Leukaemia \\(Aml\\)", "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)") %>%
+    str_replace("Haem:chronic Lymphocytic Leukaemia \\(Cll\\) Or Small Lymphocytic Lymphoma \\(Sll\\)", "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)") %>%
+    str_replace("Haem:chronic Myeloid Leukaemia \\(Cml\\)", "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)") %>%
+    str_replace("Haem:diffuse Large B-Cell Lymphoma \\(Dlbcl\\) And Other High Grade Mature B-Cell Neoplasms", "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)") %>%
+    str_replace("Haem:follicular Lymphoma", "Haematological malignancy: Follicular Lymphoma (experimental)") %>%
+    str_replace("Haem:hodgkin Lymphoma", "Haematological malignancy: Hodgkin Lymphoma (experimental)") %>%
+    str_replace("Haem:mantle Cell Lymphoma \\(Mcl\\)", "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)") %>%
+    str_replace("Haem:myeloma", "Haematological malignancy: Myeloma (experimental)") %>%
+    str_replace("Haem:other Haematological Malignancies", "Haematological malignancy: Other haematological malignancies (experimental)")
+  
 ```
 
 ```{r}
 #All defined malignant sites 
 defined_malignant<- demographic_factors %>%
-    filter(!(cancergroup %in% c("Benign Endocrine", "Brain: Non-malignant", "Bladder: Non-malignant (experimental)", "Skin: Melanoma in situ", "Other: Non-malignant neoplasms", "Other: Malignant neoplasms"))) %>% 
+    filter(!(cancergroup %in% c("Benign endocrine", "Brain: Non-malignant", "Bladder: Non-malignant", "Skin: Melanoma in situ", "Other: Non-malignant neoplasms", "Other: Malignant neoplasms", 
+                                "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)", "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)", "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)", "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)", "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)", "Haematological malignancy: Follicular Lymphoma (experimental)", "Haematological malignancy: Hodgkin Lymphoma (experimental)", "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)", "Haematological malignancy: Myeloma (experimental)", "Haematological malignancy: Other haematological malignancies (experimental)"))) %>% 
     group_by(factor, value, year, rt_flag, ct_flag, sg_flag) %>%
     summarise(tumour_count = sum(tumour_count)) %>%
-    mutate(cancergroup = "All defined malignant neoplasms")
+    mutate(cancergroup = "All malignant neoplasms with surgery defined") ## *explanatory notes / table for this definition
 
 ```
 
 ```{r}
 #All defined non-malignant neoplasms 
 defined_non_malignant<- demographic_factors %>%
-    filter(cancergroup %in% c("Benign Endocrine", "Brain: Non-malignant","Bladder: Non-malignant (experimental)", "Skin: Melanoma in situ")) %>% 
+    filter(cancergroup %in% c("Benign endocrine", "Brain: Non-malignant","Bladder: Non-malignant", "Skin: Melanoma in situ")) %>% 
     group_by(factor, value, year, rt_flag, ct_flag, sg_flag) %>%
     summarise(tumour_count = sum(tumour_count)) %>%
-    mutate(cancergroup = "All defined non-malignant neoplasms")
+    mutate(cancergroup = "All non-malignant neoplasms with surgery defined") ## *explanatory notes / table for this definition (not incl skin and haem D codes)
 
 ```
 
 ```{r}
 #All malignant sites excl C44
 malignant_exclC44<- demographic_factors %>%
-    filter(!(cancergroup %in% c("Benign Endocrine", "Brain: Non-malignant", "Bladder: Non-malignant (experimental)", "Skin: Melanoma in situ", "Other: Non-malignant neoplasms", "Other: Malignant neoplasms",
-                                "Skin: BCC (experimental)","Skin: cSCC (experimental)","Skin: Rare"))) %>% 
+    filter(!(cancergroup %in% c("Benign endocrine", "Brain: Non-malignant", "Bladder: Non-malignant", "Skin: Melanoma in situ", "Other: Non-malignant neoplasms", "Other: Malignant neoplasms",
+                                "Skin: BCC (experimental)","Skin: cSCC (experimental)","Skin: Rare", 
+                                "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)", "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)", "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)", "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)", "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)", "Haematological malignancy: Follicular Lymphoma (experimental)", "Haematological malignancy: Hodgkin Lymphoma (experimental)", "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)", "Haematological malignancy: Myeloma (experimental)", "Haematological malignancy: Other haematological malignancies (experimental)"))) %>% 
     group_by(factor, value, year, rt_flag, ct_flag, sg_flag) %>%
     summarise(tumour_count = sum(tumour_count)) %>%
-    mutate(cancergroup = "All defined malignant neoplasms, excluding BCC, cSSC and rare skin cancers")
+    mutate(cancergroup = "All malignant neoplasms with surgery defined, excluding BCC, cSSC and rare skin cancers") ## *explanatory notes / table for this definition
 
 ##Not technically only C44 skin cancer excluded:
 #genital Bcc and SCC are not all C44 but are excluded from this group
 #Rare (inlcuidng EMPD) - mostly C44 but some other sites are in here too
 
 ```
+```{r}
+#All haematological sites
+all_haem<- demographic_factors %>%
+    filter((cancergroup %in% c("Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)", "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)", "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)", "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)", "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)", "Haematological malignancy: Follicular Lymphoma (experimental)", "Haematological malignancy: Hodgkin Lymphoma (experimental)", "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)", "Haematological malignancy: Myeloma (experimental)", "Haematological malignancy: Other haematological malignancies (experimental)"))) %>% 
+    group_by(factor, value, year, rt_flag, ct_flag, sg_flag) %>%
+    summarise(tumour_count = sum(tumour_count)) %>%
+    mutate(cancergroup = "All haematological malignancies (experimental)") ## *explanatory notes / table for this definition
+
+```
 
 ```{r}
-demographic_factors_all<- rbindlist(list(demographic_factors, defined_malignant, defined_non_malignant,malignant_exclC44), use.names = TRUE)
+demographic_factors_all<- rbindlist(list(demographic_factors, defined_malignant, defined_non_malignant,malignant_exclC44, all_haem), use.names = TRUE)
 ```
 
 ```{r}
@@ -242,7 +277,7 @@ demographic_factors_all<- rbindlist(list(demographic_factors, defined_malignant,
 demographic_factors_all_years<- demographic_factors_all %>%
   group_by(cancergroup, factor, value, rt_flag, ct_flag, sg_flag) %>%
   summarise(tumour_count=sum(tumour_count)) %>%
-  mutate("year" = "2013-2020") 
+  mutate("year" = "2013-2021") 
 ```
 
 ```{r}
@@ -261,33 +296,29 @@ demographic_factors_all$sg_flag<- str_replace(demographic_factors_all$sg_flag, "
 ```
 
 ```{r}
-#Remove information for Charlson comorbidity index for all non-malignant neoplasms, due to it mainly being unknown data. Also for Endocrine (benign and non-benign) and Skin NMSC tumours. The data for these is very limited.  
+#Remove information for Charlson comorbidity index for all non-malignant neoplasms, due to it mainly being unknown data. Also for endocrine (benign and non-benign) and Skin NMSC tumours. The data for these is very limited.  
 
 #demographic_factors_all<- demographic_factors_all %>%
-#  filter(!(cancergroup %in% c("Benign Endocrine", "Non-Benign Endocrine", "Skin: Non-melanoma skin cancer, BCC", "Skin: Non-melanoma skin cancer, cSCC", "Skin: Non-melanoma skin cancer, Other", "All non-malignant neoplasms") & factor=="Charlson comorbidity index"))
+#  filter(!(cancergroup %in% c("Benign endocrine", "Non-benign endocrine", "Skin: Non-melanoma skin cancer, BCC", "Skin: Non-melanoma skin cancer, cSCC", "Skin: Non-melanoma skin cancer, Other", "All non-malignant neoplasms") & factor=="Charlson comorbidity index"))
 ```
 
 ```{r}
-fwrite(demographic_factors_all, file = "demography.csv" , row.names = FALSE, sep=",")
+fwrite(demographic_factors_all, file = "N:/INFO/_LIVE/NCIN/Natalia P/demography.csv" , row.names = FALSE, sep=",")
 ```
 
 # Treatment Breakdown by Alliance 
 
 ```{r}
- alliances<- as_tibble(dbGetQueryOracle(server_name, "select cancergroup
- , canalliance_2021_name as alliance
+
+ alliances<- as_tibble(dbGetQueryOracle(CAS_casref01, "select cancergroup
+ , canalliance_2023_name as alliance
  , rt_flag
  , ct_flag
  , sg_flag
  , count(tumourid) as tumour_count
  , diagnosisyear
- from username.av_treatment_1320_4p8
- group by cancergroup, canalliance_2021_name, rt_flag, ct_flag, sg_flag, diagnosisyear"))
-```
-
-```{r}
-#remove data for vulva
-alliances<-filter(alliances,!CANCERGROUP=="VULVA")
+ from analysisnataliapetersen.treatment_table_1321_4p9
+ group by cancergroup, canalliance_2023_name, rt_flag, ct_flag, sg_flag, diagnosisyear"))
 ```
 
 ```{r}
@@ -299,6 +330,8 @@ geography<- alliances %>%
 geography$cancergroup<- geography$cancergroup %>%
     str_to_title() %>%
     str_replace_all("_", " ") %>%
+    str_replace("Benign Endocrine", "Benign endocrine") %>%
+    str_replace("Non-Benign endocrine", "Non-benign endocrine") %>%
     str_replace("Skin:keratinocyte Skin, Bcc", "Skin: BCC (experimental)") %>%
     str_replace("Skin:keratinocyte, Cscc", "Skin: cSCC (experimental)") %>%
     str_replace("Skin:non-Keratinocyte, Rare", "Skin: Rare") %>%
@@ -318,47 +351,74 @@ geography$cancergroup<- geography$cancergroup %>%
     str_replace("^Other Malignant$", "Other: Malignant neoplasms") %>%
     str_replace("Other Non-Malignant", "Other: Non-malignant neoplasms") %>%
     str_replace("Pancreas", "Pancreatic")%>%
-    str_replace("Non-Malignant Bladder", "Bladder: Non-malignant (experimental)")%>%
-    str_replace("Malignant Bladder", "Bladder: Malignant") 
+    str_replace("Non-Malignant Bladder", "Bladder: Non-malignant")%>%
+    str_replace("Malignant Bladder", "Bladder: Malignant") %>%
+    str_replace("Anal", "Anal (experimental)") %>%  
+    str_replace("Liver", "Liver excluding intrahepatic cholangiocarcinoma (experimental)") %>%
+    str_replace("Cholangiocarcinoma", "Cholangiocarcinoma (experimental)") %>%
+    str_replace("Gallbladder", "Gallbladder (experimental)") %>%
+    str_replace("Ampulla of vater", "Ampulla of Vater (experimental)") %>%
+    str_replace("Haem:acute Lymphoblastic Leukaemia \\(All\\)", "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)") %>%
+    str_replace("Haem:acute Myeloid Leukaemia \\(Aml\\)", "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)") %>%
+    str_replace("Haem:chronic Lymphocytic Leukaemia \\(Cll\\) Or Small Lymphocytic Lymphoma \\(Sll\\)", "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)") %>%
+    str_replace("Haem:chronic Myeloid Leukaemia \\(Cml\\)", "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)") %>%
+    str_replace("Haem:diffuse Large B-Cell Lymphoma \\(Dlbcl\\) And Other High Grade Mature B-Cell Neoplasms", "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)") %>%
+    str_replace("Haem:follicular Lymphoma", "Haematological malignancy: Follicular Lymphoma (experimental)") %>%
+    str_replace("Haem:hodgkin Lymphoma", "Haematological malignancy: Hodgkin Lymphoma (experimental)") %>%
+    str_replace("Haem:mantle Cell Lymphoma \\(Mcl\\)", "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)") %>%
+    str_replace("Haem:myeloma", "Haematological malignancy: Myeloma (experimental)") %>%
+    str_replace("Haem:other Haematological Malignancies", "Haematological malignancy: Other haematological malignancies (experimental)") 
 
 ```
 
 ```{r}
 #All defined malignant sites 
 geo_defined_malignant<- geography %>%
-    filter(!(cancergroup %in% c("Benign Endocrine", "Brain: Non-malignant", "Bladder: Non-malignant (experimental)", "Skin: Melanoma in situ", "Other: Non-malignant neoplasms", "Other: Malignant neoplasms"))) %>% 
+    filter(!(cancergroup %in% c("Benign endocrine", "Brain: Non-malignant", "Bladder: Non-malignant", "Skin: Melanoma in situ", "Other: Non-malignant neoplasms", "Other: Malignant neoplasms", 
+                                "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)", "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)", "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)", "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)", "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)", "Haematological malignancy: Follicular Lymphoma (experimental)", "Haematological malignancy: Hodgkin Lymphoma (experimental)", "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)", "Haematological malignancy: Myeloma (experimental)", "Haematological malignancy: Other haematological malignancies (experimental)"))) %>% 
     group_by(alliance, rt_flag, ct_flag, sg_flag, diagnosisyear) %>%
     summarise(tumour_count = sum(tumour_count)) %>%
-    mutate(cancergroup = "All defined malignant neoplasms")
+    mutate(cancergroup = "All malignant neoplasms with surgery defined") ## *explanatory notes / table for this definition
 
 ```
 
 ```{r}
 #All defined non-malignant neoplasms 
 geo_defined_non_malignant<- geography %>%
-    filter(cancergroup %in% c("Benign Endocrine", "Brain: Non-malignant","Bladder: Non-malignant (experimental)", "Skin: Melanoma in situ")) %>% 
+    filter(cancergroup %in% c("Benign endocrine", "Brain: Non-malignant","Bladder: Non-malignant", "Skin: Melanoma in situ")) %>% 
     group_by(alliance, rt_flag, ct_flag, sg_flag, diagnosisyear) %>%
     summarise(tumour_count = sum(tumour_count)) %>%
-    mutate(cancergroup = "All defined non-malignant neoplasms")
+    mutate(cancergroup = "All non-malignant neoplasms with surgery defined") ## *explanatory notes / table for this definition (not incl skin and haem D codes)
+
 
 ```
 
 ```{r}
 #All defined malignant sites excl C44
 geo_malignant_exclC44<- geography %>%
-    filter(!(cancergroup %in% c("Benign Endocrine", "Brain: Non-malignant", "Bladder: Non-malignant (experimental)", "Skin: Melanoma in situ", "Other: Non-malignant neoplasms","Other: Malignant neoplasms",
-                                "Skin: BCC (experimental)","Skin: cSCC (experimental)","Skin: Rare"))) %>%
+    filter(!(cancergroup %in% c("Benign endocrine", "Brain: Non-malignant", "Bladder: Non-malignant", "Skin: Melanoma in situ", "Other: Non-malignant neoplasms","Other: Malignant neoplasms",
+                                "Skin: BCC (experimental)","Skin: cSCC (experimental)","Skin: Rare", 
+                                "Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)", "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)", "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)", "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)", "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)", "Haematological malignancy: Follicular Lymphoma (experimental)", "Haematological malignancy: Hodgkin Lymphoma (experimental)", "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)", "Haematological malignancy: Myeloma (experimental)", "Haematological malignancy: Other haematological malignancies (experimental)"))) %>%
     group_by(alliance, rt_flag, ct_flag, sg_flag,diagnosisyear) %>%
     summarise(tumour_count = sum(tumour_count)) %>%
-  mutate(cancergroup = "All defined malignant neoplasms, excluding BCC, cSSC and rare skin cancers")
+  mutate(cancergroup = "All malignant neoplasms with surgery defined, excluding BCC, cSSC and rare skin cancers") ## *explanatory notes / table for this definition
 
 ##Not technically only C44 skin cancer excluded:
 #genital Bcc and SCC are not all C44 but are excluded from this group
 #Rare (inlcuidng EMPD) - mostly C44 but some other sites are in here too
 ```
+```{r}
+#All haematological sites
+geo_all_haem<- geography %>%
+    filter((cancergroup %in% c("Haematological malignancy: Acute Lymphoblastic Leukaemia (ALL) (experimental)", "Haematological malignancy: Acute Myeloid Leukaemia (AML) (experimental)", "Haematological malignancy: Chronic Lymphocytic Leukaemia (CLL) or Small Lymphocytic Lymphoma (SLL) (experimental)", "Haematological malignancy: Chronic Myeloid Leukaemia (CML) (experimental)", "Haematological malignancy: Diffuse Large B-Cell Lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)", "Haematological malignancy: Follicular Lymphoma (experimental)", "Haematological malignancy: Hodgkin Lymphoma (experimental)", "Haematological malignancy: Mantle Cell Lymphoma (MCL) (experimental)", "Haematological malignancy: Myeloma (experimental)", "Haematological malignancy: Other haematological malignancies (experimental)"))) %>% 
+    group_by(alliance, rt_flag, ct_flag, sg_flag,diagnosisyear) %>%
+    summarise(tumour_count = sum(tumour_count)) %>%
+    mutate(cancergroup = "All haematological malignancies (experimental)") ## *explanatory notes / table for this definition
+
+```
 
 ```{r}
-geography_all<- rbindlist(list(geography, geo_defined_malignant, geo_defined_non_malignant,geo_malignant_exclC44), use.names = TRUE)
+geography_all<- rbindlist(list(geography, geo_defined_malignant, geo_defined_non_malignant,geo_malignant_exclC44, geo_all_haem), use.names = TRUE)
 ```
 
 ```{r}
@@ -410,22 +470,31 @@ geo_18_20<- geography_all %>%
    summarise(tumour_count=sum(tumour_count)) %>%
    mutate("year_range" = "2018-2020") 
 
-geo_13_20<- geography_all %>%
-  filter(diagnosisyear %in% c(2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020)) %>%
+geo_19_21<- geography_all %>%
+  filter(diagnosisyear %in% c(2019, 2020, 2021)) %>%
   group_by(cancergroup, alliance, rt_flag, ct_flag, sg_flag) %>%
   summarise(tumour_count=sum(tumour_count)) %>%
-  mutate("year_range" = "2013-2020") 
+  mutate("year_range" = "2019-2021")
+
+geo_13_21<- geography_all %>%
+  filter(diagnosisyear %in% c(2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021)) %>%
+  group_by(cancergroup, alliance, rt_flag, ct_flag, sg_flag) %>%
+  summarise(tumour_count=sum(tumour_count)) %>%
+  mutate("year_range" = "2013-2021")
+  
 ```
 
 ```{r}
-geo_20<- bind_rows(geo_13_15, geo_14_16, geo_15_17, geo_16_18, geo_17_19, geo_18_20, geo_13_20) 
+geo_21<- bind_rows(geo_13_15, geo_14_16, geo_15_17, geo_16_18, geo_17_19, geo_18_20, geo_19_21, geo_13_21) 
 ```
 
 
 
 
 ```{r}
-fwrite(geo_20, file = "geography.csv", row.names = FALSE, sep=",")
+
+fwrite(geo_21, file = "N:/INFO/_LIVE/NCIN/Natalia P/geography.csv", row.names = FALSE, sep=",")
+
 ```
 
 

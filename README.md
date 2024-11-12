@@ -25,6 +25,8 @@ Email: ndrsenquiries@nhs.net
  - **data_preparation.RMD** - This script takes data from the treatment flags table produced by the SQL code and creates .csv files in the correct format for the R Shiny apps to use.
  - **Treatments_demography.R** and **Treatments_geography.R** - These scripts build the R Shiny apps, including the design elements for presenting the demographic and geographic breakdowns, respectively.
 
+Note: we recomend using a code or text editor such as Visual Studio (VS) Code for editing the CSV files within this repository. Useful extensions to use for this purpose within VS Code are 'Edit csv', 'Excel Viewer', and 'Rainbow CSV'. This reduces the risk of conflicts caused by unintended additional commas separating values in Microsoft Excel.
+
 #### License
 
 The codebase is released under the MIT License. This covers both the codebase and any code in the documentation.

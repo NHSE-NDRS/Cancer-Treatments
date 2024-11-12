@@ -217,7 +217,7 @@ AND NOT(avt.tumourid=avt2.tumourid)
 AND ((avt2.site_icd10r4_o2_3char_from2013 NOT IN ('D01','D03','D04','D06','D07','D11','D13','D15','D16','D18','D25','D27','D36','D40','D48','C44')    
 AND avt2.diagnosisyear BETWEEN 2013 AND 2023)
 or (avt2.site_icd10_o2_3char_pre2013 NOT IN ('D01','D03','D04','D06','D07','D11','D13','D15','D16','D18','D25','D27','D36','D40','D48','C44')    
-AND avt2.diagnosisyear =2011))
+AND avt2.diagnosisyear between 2011 AND 2012))
 
 --Removes duplicate tumour rows that had been added to identify patients with multiple tumours
 )WHERE rk=1;
@@ -1124,9 +1124,9 @@ tumourid, datediff ,rk, start_date_of_regimen, sact2_trust_code
 		sr.start_date_of_regimen, SUBSTR(st.organisation_code_of_provider,1,3) AS sact2_trust_code 
 		FROM tr_tumour_cohort tc 
 		INNER JOIN analysisnataliapetersen.timeframe_lookup_13_21@casref01 TIM ON TIM.tumouricdsite3code = tc.tumour_code 
-		INNER JOIN sact.at_patient_england@cas2402 sp ON tc.nhsnumber=sp.nhs_number 
-		INNER JOIN sact.at_tumour_england@cas2402 st ON sp.encore_patient_id = st.encore_patient_id
-		INNER JOIN sact.at_regimen_england@cas2402 sr ON st.sact_tumour_id=sr.sact_tumour_id 
+		INNER JOIN sact.at_patient_england@cas2408 sp ON tc.nhsnumber=sp.nhs_number 
+		INNER JOIN sact.at_tumour_england@cas2408 st ON sp.encore_patient_id = st.encore_patient_id
+		INNER JOIN sact.at_regimen_england@cas2408 sr ON st.sact_tumour_id=sr.sact_tumour_id 
 		AND (NOT (benchmark_group IN ('NOT CHEMO','HORMONES','ZOLEDRONIC ACID','PAMIDRONATE','DENOSUMAB', 'RADIUM 223', 'LUTETIUM-177', 'YTTRIUM-90') OR benchmark_group IS NULL)) 
 		AND sr.start_date_of_regimen-tc.diagnosisdatebest BETWEEN -31 AND TIM.chemo_time 
 		AND sr.start_date_of_regimen>=TO_DATE('2017-07-01','YYYY-MM-DD')
@@ -1285,9 +1285,10 @@ RANK() OVER (PARTITION BY tc.tumourid ORDER BY TO_DATE(pr.apptdate),pr.attendid,
 , pr.orgcodeprovider AS rtds2_trust_code
 FROM tr_tumour_cohort tc 
 INNER JOIN analysisnataliapetersen.timeframe_lookup_13_21@casref01  tim ON tim.tumouricdsite3code = tc.tumour_code 
-INNER JOIN rtds.at_prescriptions_england@cas2402 pr ON pr.patientid=tc.patientid
+INNER JOIN rtds.at_prescriptions_england@cas2408 pr ON pr.patientid=tc.patientid
 AND pr.orgcodeprovider <>'7A3' 
-AND TO_DATE(pr.apptdate)-tc.diagnosisdatebest BETWEEN -31 AND tim.radio_time AND TO_DATE(pr.apptdate) BETWEEN TO_DATE('01-APR-16', 'dd-mm-yy') AND TO_DATE('31-DEC-20 23:59:00', 'DD/MM/YY HH24:MI:SS') 
+AND TO_DATE(pr.apptdate)-tc.diagnosisdatebest BETWEEN -31 AND tim.radio_time
+AND TO_DATE(pr.apptdate) >= TO_DATE('01-APR-16', 'dd-mon-yy')
 ) 
 WHERE rk=1 
 ) 
@@ -1904,9 +1905,9 @@ ptr.TUMOURID
 FROM pre_treat_table ptr
 LEFT JOIN summary_fields sf on ptr.tumourid = sf.tumourid 
 -- Trust name
-LEFT JOIN analysisncr.trustsics@cas2402 atr_ct on sf.summary_ct_trustcode = atr_ct.code
-LEFT JOIN analysisncr.trustsics@cas2402 atr_rt on sf.summary_rt_trustcode = atr_rt.code
-LEFT JOIN analysisncr.trustsics@cas2402 atr_sg on sf.summary_sg_trustcode = atr_sg.code
+LEFT JOIN analysisncr.trustsics@cas2408 atr_ct on sf.summary_ct_trustcode = atr_ct.code
+LEFT JOIN analysisncr.trustsics@cas2408 atr_rt on sf.summary_rt_trustcode = atr_rt.code
+LEFT JOIN analysisncr.trustsics@cas2408 atr_sg on sf.summary_sg_trustcode = atr_sg.code
 
 ;
 

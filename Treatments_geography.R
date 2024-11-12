@@ -91,6 +91,7 @@ ui <- fluidPage(
                   choices = as.list(levels(data$year_range)),
                   multiple = FALSE),
       
+
       strong(paste0("This website presents the proportion of tumours diagnosed in England in ",min(years),"-",max(years)," recorded as receiving radiotherapy, chemotherapy or tumour resection as part of the primary course of treatment following diagnosis.")),
       br(),
       p("Please select from the drop-down lists above to view graphs for a specific cancer site, year of diagnosis, and cancer alliance."),
@@ -100,7 +101,9 @@ ui <- fluidPage(
       strong(paste0("Please see the ‘Information’ tab for a more detailed description of the data presented.")),
       br(),
       br(),
-      p("The methodology is described in the standard operating procedure ", a("CAS-SOP v4.9 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"), em("(Please note this link may not load in all browsers).")),
+      p("The methodology is described in the standard operating procedure ", a("CAS-SOP v4.9.1 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"), em("(Please note this link may not load in all browsers).")),
+      br(),
+      p("The data was last refreshed in November 2024. Please see the 'Information' tab for further details."),
       br(),
       strong("Click below to download a copy of the data, and for TIFF outputs of the graphs:"),
       br(),
@@ -949,7 +952,8 @@ server <- function(input, output) {
     str1 <- p("This work aims to provide basic information on the percentage of tumours receiving chemotherapy, radiotherapy and / or a surgical tumour resection as part of the primary course of treatment following diagnosis.")
     str2 <- p("These statistics on cancer treatments aim to support the understanding of how patients are treated for their cancer diagnosis and how this varies between cancer sites. This understanding is vital to assess variation and make improvements to treatment pathways.")
     str3 <- strong("Methodology")
-    str4 <- p("The methodology is described in the standard operating procedure ", a("CAS-SOP v4.9 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"), em("(Please note this link may not load in all browsers)."))
+    str4 <- p("The methodology is described in the standard operating procedure ", a("CAS-SOP v4.9.1 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"), em("(Please note this link may not load in all browsers)."))
+    str4a <- p("November 2024 refresh: The treatment data for 2013-2021 diagnoses were refreshed in November 2024 (originally published 25th April 2024). This was due to an error identified which meant that a small number (<2%) of radiotherapy treatments that happened after 2020, affecting diagnoses from 2019, were being incorrectly excluded. The methodology for the counting of multiple tumours has also been slightly amended. Please see the SOP for further details. All treatment proportions were refreshed in this publication due to the use of more recently available data.")
     str5 <- strong("Datasets:")
     str6 <- p(paste0("Patients diagnosed with cancer in England in ",min(years),"-",max(years),", excluding males with gynaecological cancer and females with prostate cancer, were selected from the National Cancer Registration and Analysis dataset. Death certificate only registrations are included (1% of the cohort)."))
     str7 <- p("Datasets used to capture treatment information include cancer registration data, the Systemic Anti-Cancer Therapy dataset (SACT), RadioTherapy DataSet (RTDS), and inpatient and outpatient Hospital Episode Statistics (HES).")
@@ -963,7 +967,7 @@ server <- function(input, output) {
     str14 <- p("Other care represents the group of patients who had no record of chemotherapy, tumour resection, or radiotherapy in the time frame assessed. This may include patients who received other treatments (such as hormonal therapy or management of symptoms), treatment outside of the time frame assessed, treatment in a private setting, or there may be data missing from the datasets used. Other care for haematological subsites may also include patients who have undergone tumour resection treatment as surgery has not yet been defined for these cancers.")
     str15 <- strong("Time period:")
     str16 <- p(paste("Treatments occurring in the period from 1 month before diagnosis to either 6, 9, 12, 15 or 18 months after diagnosis are displayed for tumours diagnosed in ",min(years),"-",max(years),". The time period within which the majority of first course of treatments occurred varies by cancer site and treatment type. Therefore, an appropriate time period for each cancer site has been chosen using a data-driven approach in consultation with clinicians."))
-    str16a <- p("For more information, and a sensitivity analysis showing the effect of varying the time periods, see", a("CAS-SOP v4.9 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"))
+    str16a <- p("For more information, and a sensitivity analysis showing the effect of varying the time periods, see", a("CAS-SOP v4.9.1 Linking treatment tables: chemotherapy, tumour resections, and radiotherapy.", href="https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments"))
     str17 <- strong("Known issues:")
     str18 <- p("For pancreatic tumours, a much lower proportion of early-stage tumours are recorded to have been resected than expected. Feedback from clinical experts highlighted that this does not fit with clinical experience, so further investigation is needed to understand whether all resections are being captured by the data and methodology.")
     str19 <- p("Figures for non-melanoma skin cancers (NMSC) are currently experimental and likely to be undercounting surgical tumour resections.")
@@ -991,7 +995,7 @@ server <- function(input, output) {
     str32 <- p("This tool is produced by the National Disease Registration Service (NDRS), as part of the Cancer Research UK - NHS England Partnership.")
     str33 <- p(" Please send any feedback or queries to ndrsenquiries@nhs.net. Please do not include sensitive or patient identifiable information.")
     
-    HTML(paste(str0, str1, str2, str3, str4, str5, str6, str7, str8, str9, str10, 
+    HTML(paste(str0, str1, str2, str3, str4, str4a, str5, str6, str7, str8, str9, str10, 
                str11, str12, str13, str14, str15, str16, str16a, str17, str18, str19, str20, 
                str21, str22, str23, str24, str25, str26, str27, str28, str29,str30, 
                str31, str32, str33, sep = ' '))

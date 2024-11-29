@@ -751,7 +751,7 @@ shovegraphintofunction2 = function(input) {
             geom_bar(position = position_stack(reverse = TRUE),stat="identity", aes(fill = treatment_combinations)) +
             labs(x = input$factor, title = paste(input$cancer, "cancer ","\n",input$year,"\nTreatments are presented in combinations as a stacked bar chart"), caption = "This work has been produced as part of the Cancer Research UK - NHS England Partnership") +
             scale_y_continuous(breaks=c(0,0.1, 0.2, 0.3, 0.4,0.5,0.6,0.7,0.8,0.9, 1), labels = scales::percent, name = " Proportion of tumours", limits = c(0, 1)) +
-            scale_x_discrete(labels = c("Male", "Female")) + 
+            scale_x_discrete(limits = c("Male","Female"), labels = c("Male","Female")) + 
           scale_fill_manual(name = "", values = c("Other care" = "#BFBFBF", "Chemotherapy only" = "#92D050",
                                                     "Tumour resection only" = "#00B0F0", "Radiotherapy only" = "#FFC000",
                                                     "Chemotherapy and radiotherapy" = "#FF33CC", "Tumour resection and chemotherapy" = "#002060",
@@ -995,7 +995,7 @@ shovegraphintofunction3 = function(input) {
                                                     "Tumour resection only" = "#00B0F0", "Radiotherapy only" = "#FFC000",
                                                     "Chemotherapy and radiotherapy" = "#FF33CC", "Tumour resection and chemotherapy" = "#002060",
                                                     "Tumour resection and radiotherapy" = "#FFFF00", "Tumour resection, radiotherapy and chemotherapy" = "#7030A0")) +
-            scale_x_discrete(labels = c("Male","Female")) + 
+            scale_x_discrete(limits = c("Male","Female"), labels = c("Male","Female")) + 
           theme_classic(base_size = 15) +
             theme(legend.position="right", legend.text = element_text(size = 12) ) +
             theme(plot.caption=element_text(size=11, face="italic", hjust=0)) +

@@ -1,0 +1,131 @@
+
+```{r}
+library(NDRSAfunctions)
+library(tidyverse)
+library(NDRSAfunctions)
+
+# Connect to CAS
+server = "casref02"
+CAS_username = "analysisnataliapetersen"
+cas_snapshot <- createConnection(username = CAS_username)
+```
+
+```{sql, connection = cas_snapshot, output.var = "cancergroups"}
+select distinct cancergroup
+from analysisnataliapetersen.treatment_table_1322_4p10
+```
+
+```{r}
+cancergroups$cancergroup <- cancergroups$CANCERGROUP%>%
+#    str_to_title() %>%
+  #  str_replace_all("_", " ") %>%
+    str_replace("Bladder:Unknown muscle-invasion urothelial", "Bladder: Unknown muscle-invasion urothelial (experimental)") %>%
+    str_replace("Bladder:Muscle-invasive urothelial", "Bladder: Muscle-invasive urothelial (experimental)") %>%
+    str_replace("Bladder:T1 non-muscle-invasive urothelial", "Bladder: T1 non-muscle-invasive urothelial (experimental)") %>%
+    str_replace("Bladder:Ta/Tis non-muscle-invasive urothelial", "Bladder: Ta/Tis non-muscle-invasive urothelial (experimental)") %>%
+    str_replace("Bladder:Other morphology or uncertain/unknown behaviour", "Bladder: Other morphology or uncertain/unknown behaviour (experimental)") %>%
+    str_replace("Brain:Benign endocrine", "Brain: Benign endocrine") %>%
+    str_replace("Brain:Malignant", "Brain: Malignant") %>%
+    str_replace("Brain:Non-benign endocrine", "Brain: Non-benign endocrine") %>%       
+    str_replace("Brain:Non-malignant brain", "Brain: Non-malignant") %>%
+    str_replace("Colon", "Colon and rectosigmoid junction") %>%   
+    str_replace("Eye", "Eye (experimental)") %>%  
+    str_replace("Heart, mediastinum, pleura, other and ill-defined", "Heart, mediastinum, pleura, other and ill-defined (experimental)") %>%
+    str_replace("Hypopharynx", "Head and neck: Hypopharynx") %>% 
+    str_replace("Larynx", "Head and neck: Larynx") %>%      
+    str_replace("Major salivary glands", "Head and neck: Major salivary glands") %>%  
+    str_replace("Mesothelioma", "Mesothelioma (experimental)") %>%  
+    str_replace("Other head and neck", "Head and neck: Other head and neck excluding lip") %>%  
+    str_replace("Non-small cell lung cancer", "Lung: Non-small cell lung cancer") %>%  
+    str_replace("Oral cavity", "Head and neck: Oral cavity") %>%   
+    str_replace("Oropharynx", "Head and neck: Oropharynx") %>%
+    str_replace("Other non-malignant", "Other: Non-malignant neoplasms") %>%
+    str_replace("Other malignant", "Other: Malignant neoplasms") %>%                        
+    str_replace("Small cell lung cancer", "Lung: Small cell lung cancer") %>% 
+    str_replace("Thymus", "Thymus (experimental)") %>%  
+    str_replace("Uterus", "Womb (Uterus)") %>%   
+
+  # skin
+    str_replace("Skin:Non-keratinocyte, melanoma", "Skin: Melanoma") %>%
+    str_replace("Skin:Non-keratinocyte, melanoma in situ", "Skin: Melanoma in situ") %>%
+    str_replace("Skin:Non-keratinocyte, rare", "Skin: Rare") %>%
+    str_replace("Skin:Keratinocyte skin, BCC", "Skin: BCC (experimental)") %>% 
+    str_replace("Skin:Keratinocyte, CSCC", "Skin: cSCC (experimental)") %>% 
+      
+ # haem - 'blood cancer' or 'haematological neoplasms' 
+    str_replace("Haem:Acute lymphoblastic leukaemia \\(ALL\\)", "Blood cancer: Acute lymphoblastic leukaemia (ALL) (experimental)") %>%
+    str_replace("Haem:Chronic myelomonocytic leukaemia \\(CMML\\)", "Blood cancer: Chronic myelomonocytic leukaemia (CMML) (experimental)") %>%
+    str_replace("Haem:Acute myeloid leukaemia \\(AML\\)", "Blood cancer: Acute myeloid leukaemia (AML)  (experimental)") %>%
+    str_replace("Haem:Hodgkin lymphoma", "Blood cancer: Hodgkin lymphoma (experimental)") %>%
+    str_replace("Haem:Lymphoproliferative disorders and non-specific", "Blood cancer: Lymphoproliferative disorders and non-specific (experimental)") %>%
+    str_replace("Haem:Mature T-cell and NK-cell neoplasms", "Blood cancer: Mature T-cell and NK-cell neoplasms (experimental)") %>%
+    str_replace("Haem:Chronic lymphocytic leukaemia \\(CLL\\) or small lymphocytic lymphoma \\(SLL\\)", "Blood cancer: Chronic lymphocytic leukaemia (CLL) or small lymphocytic lymphoma (SLL) (experimental)") %>%
+    str_replace("Haem:Diffuse large B-cell lymphoma \\(DLBCL\\) and other high grade mature B-cell neoplasms", "Blood cancer: Diffuse large B-cell lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)") %>%
+    str_replace("Haem:Follicular lymphoma", "Blood cancer: Follicular lymphoma (experimental)") %>%
+    str_replace("Haem:Mantle cell lymphoma \\(MCL\\)", "Blood cancer: Mantle cell lymphoma (MCL) (experimental)") %>%
+    str_replace("Haem:Chronic myeloid leukaemia \\(CML\\)", "Blood cancer: Chronic myeloid leukaemia (CML) (experimental)") %>%
+    str_replace("Haem:Myeloma", "Blood cancer: Myeloma (experimental)") %>%
+    str_replace("Haem:Myelodysplastic syndromes \\(MDS\\)", "Blood cancer: Myelodysplastic syndromes (MDS) (experimental)") %>%
+    str_replace("Haem:Other plasma cell neoplasms", "Blood cancer: Other plasma cell neoplasms (experimental)") %>%
+    str_replace("Haem:Other mature B-cell neoplasms", "Blood cancer: Other mature B-cell neoplasms (experimental)") %>%
+    str_replace("Haem:Other myeloproliferative neoplasms", "Blood cancer: Other myeloproliferative neoplasms (experimental)") %>%
+    str_replace("Haem:Other myeloid", "Blood cancer: Other myeloid (experimental)") %>%
+    str_replace("Haem:Other haematological neoplasms", "Blood cancer: Other haematological neoplasms (experimental)")
+
+```
+
+```{r}
+cancergroups <- cancergroups %>%
+  rename("raw_cancergroup" = CANCERGROUP
+         ,"publication_cancergroup" = cancergroup)
+
+cancergroups_csv <- cancergroups %>%
+  mutate(`All cancer types with surgery defined` 
+         = ifelse(!(publication_cancergroup 
+                    %in% c("Other: Non-malignant neoplasms",
+                           "Other: Malignant neoplasms", 
+                           "Blood cancer: Other haematological neoplasms (experimental)"))
+                           ,1,0
+                                )
+
+                 ,`All cancer types with surgery defined excluding NMSC`
+         = ifelse(!(publication_cancergroup 
+                  %in% c("Other: Non-malignant neoplasms",
+                         "Other: Malignant neoplasms", 
+                         "Blood cancer: Other haematological neoplasms (experimental)",
+                         "Skin: cSCC (experimental)", 
+                         "Skin: BCC (experimental)", 
+                         "Skin: Rare"))
+                  ,1,0)
+         
+         ,`All blood cancer (haematological neoplasms) with surgery defined (experimental)` 
+         = ifelse(publication_cancergroup 
+                  %in% c("Blood cancer: Acute lymphoblastic leukaemia (ALL) (experimental)", 
+                               "Blood cancer: Chronic myelomonocytic leukaemia (CMML) (experimental)", 
+                               "Blood cancer: Acute myeloid leukaemia (AML)  (experimental)", 
+                               "Blood cancer: Hodgkin lymphoma (experimental)", 
+                               "Blood cancer: Lymphoproliferative disorders and non-specific (experimental)", 
+                               "Blood cancer: Mature T-cell and NK-cell neoplasms (experimental)", 
+                               "Blood cancer: Chronic lymphocytic leukaemia (CLL) or small lymphocytic lymphoma (SLL) (experimental)", 
+                               "Blood cancer: Diffuse large B-cell lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental)", 
+                               "Blood cancer: Follicular lymphoma (experimental)", 
+                               "Blood cancer: Mantle cell lymphoma (MCL) (experimental)", 
+                               "Blood cancer: Chronic myeloid leukaemia (CML) (experimental)", 
+                               "Blood cancer: Myeloma (experimental)",
+                               "Blood cancer: Myelodysplastic syndromes (MDS) (experimental)", 
+                               "Blood cancer: Other plasma cell neoplasms (experimental)", 
+                               "Blood cancer: Other mature B-cell neoplasms (experimental)", 
+                               "Blood cancer: Other myeloproliferative neoplasms (experimental)", 
+                               "Blood cancer: Other myeloid (experimental)")
+                                                                    ,1,0)
+
+)
+
+
+```
+
+
+```{r}
+write_csv(cancergroups_csv, "cancergroups.csv")
+```
+

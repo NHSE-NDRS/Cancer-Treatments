@@ -1,0 +1,64 @@
+raw_cancergroup,publication_cancergroup,All cancer types with surgery defined,All cancer types with surgery defined excluding NMSC,All blood cancer (haematological neoplasms) with surgery defined (experimental)
+Pancreas,Pancreas,1,1,0
+Haem:Diffuse large B-cell lymphoma (DLBCL) and other high grade mature B-cell neoplasms,Blood cancer: Diffuse large B-cell lymphoma (DLBCL) and other high grade mature B-cell neoplasms (experimental),1,1,1
+Breast,Breast,1,1,0
+Small cell lung cancer,Lung: Small cell lung cancer,1,1,0
+Oesophagus,Oesophagus,1,1,0
+Haem:Lymphoproliferative disorders and non-specific,Blood cancer: Lymphoproliferative disorders and non-specific (experimental),1,1,1
+Haem:Myeloma,Blood cancer: Myeloma (experimental),1,1,1
+Anus,Anus,1,1,0
+Brain:Benign endocrine,Brain: Benign endocrine,1,1,0
+Haem:Other plasma cell neoplasms,Blood cancer: Other plasma cell neoplasms (experimental),1,1,1
+Thymus,Thymus (experimental),1,1,0
+Oropharynx,Head and neck: Oropharynx,1,1,0
+"Skin:Keratinocyte, CSCC",Skin: cSCC (experimental),1,0,0
+Liver excluding intrahepatic cholangiocarcinoma,Liver excluding intrahepatic cholangiocarcinoma,1,1,0
+Haem:Acute myeloid leukaemia (AML),Blood cancer: Acute myeloid leukaemia (AML)  (experimental),1,1,1
+Haem:Acute lymphoblastic leukaemia (ALL),Blood cancer: Acute lymphoblastic leukaemia (ALL) (experimental),1,1,1
+Other non-malignant,Other: Non-malignant neoplasms,0,0,0
+Bladder:Ta/Tis non-muscle-invasive urothelial,Bladder: Ta/Tis non-muscle-invasive urothelial (experimental),1,1,0
+Oral cavity,Head and neck: Oral cavity,1,1,0
+Haem:Follicular lymphoma,Blood cancer: Follicular lymphoma (experimental),1,1,1
+Haem:Myelodysplastic syndromes (MDS),Blood cancer: Myelodysplastic syndromes (MDS) (experimental),1,1,1
+Haem:Other haematological neoplasms,Blood cancer: Other haematological neoplasms (experimental),0,0,0
+Haem:Mature T-cell and NK-cell neoplasms,Blood cancer: Mature T-cell and NK-cell neoplasms (experimental),1,1,1
+"Heart, mediastinum, pleura, other and ill-defined","Heart, mediastinum, pleura, other and ill-defined (experimental)",1,1,0
+Colon,Colon and rectosigmoid junction,1,1,0
+Prostate,Prostate,1,1,0
+Rectum,Rectum,1,1,0
+Bladder:T1 non-muscle-invasive urothelial,Bladder: T1 non-muscle-invasive urothelial (experimental),1,1,0
+Haem:Chronic lymphocytic leukaemia (CLL) or small lymphocytic lymphoma (SLL),Blood cancer: Chronic lymphocytic leukaemia (CLL) or small lymphocytic lymphoma (SLL) (experimental),1,1,1
+Stomach,Stomach,1,1,0
+Testes,Testes,1,1,0
+"Skin:Non-keratinocyte, melanoma in situ",Skin: Melanoma in situ,1,1,0
+Cervix,Cervix,1,1,0
+Other head and neck,Head and neck: Other head and neck excluding lip,1,1,0
+"Skin:Non-keratinocyte, rare",Skin: Rare,1,0,0
+Hypopharynx,Head and neck: Hypopharynx,1,1,0
+"Skin:Keratinocyte skin, BCC",Skin: BCC (experimental),1,0,0
+Kidney,Kidney,1,1,0
+Haem:Chronic myelomonocytic leukaemia (CMML),Blood cancer: Chronic myelomonocytic leukaemia (CMML) (experimental),1,1,1
+Bladder:Unknown muscle-invasion urothelial,Bladder: Unknown muscle-invasion urothelial (experimental),1,1,0
+Ovary,Ovary,1,1,0
+Uterus,Womb (Uterus),1,1,0
+Larynx,Head and neck: Larynx,1,1,0
+Haem:Other myeloproliferative neoplasms,Blood cancer: Other myeloproliferative neoplasms (experimental),1,1,1
+Bladder:Other morphology or uncertain/unknown behaviour,Bladder: Other morphology or uncertain/unknown behaviour (experimental),1,1,0
+Eye,Eye (experimental),1,1,0
+Gallbladder,Gallbladder,1,1,0
+Non-small cell lung cancer,Lung: Non-small cell lung cancer,1,1,0
+Brain:Malignant,Brain: Malignant,1,1,0
+Other malignant,Other: Malignant neoplasms,0,0,0
+Cholangiocarcinoma,Cholangiocarcinoma,1,1,0
+Haem:Chronic myeloid leukaemia (CML),Blood cancer: Chronic myeloid leukaemia (CML) (experimental),1,1,1
+Haem:Hodgkin lymphoma,Blood cancer: Hodgkin lymphoma (experimental),1,1,1
+Major salivary glands,Head and neck: Major salivary glands,1,1,0
+Brain:Non-benign endocrine,Brain: Non-benign endocrine,1,1,0
+Haem:Other myeloid,Blood cancer: Other myeloid (experimental),1,1,1
+Mesothelioma,Mesothelioma (experimental),1,1,0
+"Skin:Non-keratinocyte, melanoma",Skin: Melanoma,1,1,0
+Bladder:Muscle-invasive urothelial,Bladder: Muscle-invasive urothelial (experimental),1,1,0
+Brain:Non-malignant brain,Brain: Non-malignant,1,1,0
+Haem:Other mature B-cell neoplasms,Blood cancer: Other mature B-cell neoplasms (experimental),1,1,1
+Haem:Mantle cell lymphoma (MCL),Blood cancer: Mantle cell lymphoma (MCL) (experimental),1,1,1
+Ampulla of Vater,Ampulla of Vater,1,1,0

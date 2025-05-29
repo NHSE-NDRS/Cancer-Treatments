@@ -1,0 +1,111 @@
+TUMOURICDSITE3CODE,SITE,CHEMO_TIME,RESECT_TIME,RADIO_TIME
+Acute lymphoblastic leukaemia (ALL),Acute lymphoblastic leukaemia (ALL),183,183,548
+Acute myeloid leukaemia (AML),Acute myeloid leukaemia (AML),183,365,548
+Ampulla of Vater,Ampulla of Vater,365,183,548
+Anus,Anus,183,456,183
+Benign endocrine brain,Benign endocrine brain,548,365,548
+Breast,Breast,365,365,365
+C00,Other malignant,456,0,548
+C17,Other malignant,456,0,548
+C26,Other malignant,456,0,548
+C40,Other malignant,456,0,548
+C41,Other malignant,456,0,548
+C46,Other malignant,456,0,548
+C47,Other malignant,456,0,548
+C48,Other malignant,456,0,548
+C49,Other malignant,456,0,548
+C52,Other malignant,456,0,548
+C58,Other malignant,456,0,548
+C63,Other malignant,456,0,548
+C73,Other malignant,456,0,548
+C74,Other malignant,456,0,548
+C75,Other malignant,456,0,548
+C76,Other malignant,456,0,548
+C77,Other malignant,456,0,548
+C78,Other malignant,456,0,548
+C79,Other malignant,456,0,548
+C80,Other malignant,456,0,548
+Cervix,Cervix,274,274,274
+Cholangiocarcinoma,Cholangiocarcinoma,274,183,548
+Chronic lymphocytic leukaemia (CLL) or small lymphocytic lymphoma (SLL),Chronic lymphocytic leukaemia (CLL) or small lymphocytic lymphoma (SLL),183,365,365
+Chronic myeloid leukaemia (CML),Chronic myeloid leukaemia (CML),183,365,365
+Chronic myelomonocytic leukaemia (CMML),Chronic myelomonocytic leukaemia (CMML),548,183,548
+Colon,Colon,365,183,365
+D00,Other non-malignant,456,0,548
+D01,Other non-malignant,456,0,548
+D02,Other non-malignant,456,0,548
+D04,Other non-malignant,456,0,548
+D05,Other non-malignant,456,0,548
+D06,Other non-malignant,456,0,548
+D07,Other non-malignant,456,0,548
+D09,Other non-malignant,456,0,548
+D13,Other non-malignant,456,0,548
+D15,Other non-malignant,456,0,548
+D16,Other non-malignant,456,0,548
+D21,Other non-malignant,456,0,548
+D27,Other non-malignant,456,0,548
+D30,Other non-malignant,456,0,548
+D34,Other non-malignant,456,0,548
+D37,Other non-malignant,456,0,548
+D38,Other non-malignant,456,0,548
+D39,Other non-malignant,456,0,548
+D40,Other non-malignant,456,0,548
+D41,Other non-malignant,456,0,548
+D44,Other non-malignant,456,0,548
+D48,Other non-malignant,456,0,548
+Diffuse large B-cell lymphoma (DLBCL) and other high grade mature B-cell neoplasms,Diffuse large B-cell lymphoma (DLBCL) and other high grade mature B-cell neoplasms,183,365,365
+Eye,Eye,548,274,274
+Follicular lymphoma,Follicular lymphoma,183,365,365
+Gallbladder,Gallbladder,274,183,548
+"Heart, mediastinum, pleura, other and ill-defined","Heart, mediastinum, pleura, other and ill-defined",274,365,456
+Hodgkin lymphoma,Hodgkin lymphoma,183,365,365
+Hypopharynx,Hypopharynx,183,365,183
+KC_BCC,Keratinocyte skin: BCC,548,365,548
+KC_CSCC,Keratinocyte skin: CSCC,456,183,548
+Kidney,Kidney,365,183,365
+Kidney_C65_C66,Kidney,365,183,365
+Larynx,Larynx,548,456,183
+Liver excluding intrahepatic cholangiocarcinoma,Liver excluding intrahepatic cholangiocarcinoma,456,274,548
+Lymphoproliferative disorders and non-specific,Lymphoproliferative disorders and non-specific,365,365,365
+Major salivary glands,Major salivary glands,548,183,274
+Malignant bladder invasion not known,Malignant bladder invasion not known,456,274,548
+Malignant bladder invasive,Malignant bladder invasive,365,183,456
+Malignant bladder non invasive T1,Malignant bladder non invasive T1,456,183,548
+Malignant bladder non invasive Ta/TIS,Malignant bladder non invasive Ta/TIS,456,183,548
+Malignant brain,Malignant brain,548,183,365
+Mantle cell lymphoma (MCL),Mantle cell lymphoma (MCL),183,365,183
+Mature T-cell and NK-cell neoplasms,Mature T-cell and NK-cell neoplasms,183,365,365
+Mesothelioma,Mesothelioma,365,274,548
+Myelodysplastic syndromes (MDS),Myelodysplastic syndromes (MDS),548,365,548
+Myeloma,Myeloma,183,548,183
+NON-KC_EMPD,Non-kc_rare,548,365,548
+NON-KC_MELANOMA,Melanoma,456,183,548
+NON-KC_MELANOMA_INSITU,Melanoma in situ,456,183,548
+NON-KC_RARE,Non-kc_rare,456,183,548
+Non-benign endocrine brain,Non-benign endocrine brain,548,365,548
+Non-malignant brain,Non-malignant brain,548,365,548
+Non-small cell lung cancer,Non-small cell lung cancer,183,183,183
+Oesophagus,Oesophagus,183,274,274
+Oral cavity,Oral cavity,548,183,365
+Oropharynx,Oropharynx,183,365,183
+Oropharynx_C09,Oropharynx,183,365,183
+Neoplasms and leukaemias of ambiguous lineage,Other haematological neoplasms,183,456,365
+Histiocytic and dendritic cell neoplasms,Other haematological neoplasms,183,456,365
+Langerhans cell histiocytosis (LCH),Other haematological neoplasms,183,0,365
+Other head and neck,Other head and neck,365,456,274
+Other mature B-cell neoplasms,Other mature B-cell neoplasms,365,365,365
+Other myeloid neoplasms,Other myeloid,365,365,548
+Acute promyelocytic leukaemia (APL),Other myeloid,365,365,548
+Mastocytosis,Other myeloid,365,365,548
+Other myeloproliferative neoplasms,Other myeloproliferative neoplasms,548,365,548
+Other plasma cell neoplasms,Other plasma cell neoplasms,365,548,365
+Ovary,Ovary,274,274,274
+Pancreas,Pancreas,183,274,548
+Prostate,Prostate,365,456,365
+Rectum,Rectum,365,365,365
+Small cell lung cancer,Small cell lung cancer,183,183,183
+Stomach,Stomach,183,274,274
+Testes,Testes,274,183,548
+Thymus,Thymus,548,274,456
+Uncertain/unknown or other bladder,Uncertain/unknown or other bladder,365,183,456
+Uterus,Uterus,274,274,274

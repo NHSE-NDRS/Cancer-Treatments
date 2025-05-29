@@ -1,0 +1,267 @@
+---
+title: "Assessing OPCS surgery codes"
+author: "Charlotte Eversfield"
+date: "2024-12-10"
+output: html_document
+
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = "N:/INFO/_LIVE/NCIN/Treatment Flags/Treatments data 2022/Eye cancer resection/"
+    )
+  })
+  
+---
+
+
+```{r setup, include=FALSE}
+
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r install packages, include=FALSE}
+
+library(NDRSAfunctions) #install via instructions here https://github.com/NHSE-NDRS/NDRSAfunctions
+library(dplyr)
+library(stringr)
+library(DT)
+library(openxlsx2)
+library(tidyverse)
+library(tidytext)
+library(wordcloud)
+library(wordcloud2)
+library(RColorBrewer)
+
+```
+
+```{r set parameters, include = FALSE}
+
+# Set the cancer site,name and ICD10 list
+site_name = "Eye cancer"
+site_definition = "site_icd10_o2_3char in ('C69')"
+
+# Set the other possible names for the cancer site
+site_name_list = c("retina","conjunctiva","cornea","lens") #Avoid using "cancer" or "neoplasms" etc in this list
+
+# Set the other possible names for relevant excision procedures 
+#It may be useful to look at common surgery expected for this cancer type online e.g.on the CRUK or Macmillian website treatments are often described.
+## The following are already included: "EXCISION","RESECTION","CAUTERISATION","EXTIRPATION","DESTRUCTION"
+surgery_list = NULL
+
+# Set any words that you would like to be excluded from the flag
+stop_words = c("skin", "eyelid")
+
+# Set the snapshot and schema
+av_tumour_table <- "av2022"
+snapshot <- "cas2408" #for springmvc3.ZOPCS table
+
+# Set the diagnosis years 
+# Considerations: want this to be relatively recent (as there may be changes in codes), allow for 18 months follow up for treatments, and consider COVID implications
+min_diagnosis_year<-"2016"
+max_diagnosis_year<-"2022"
+
+# Set filepath to save data:
+
+output_filepath = r"(N:\INFO\_LIVE\NCIN\Treatment Flags\Treatments data 2022\Eye cancer resection\)"
+output_filename = "Potentially_relevant_eye_cancer_resections.xlsx"
+
+```
+
+```{r connect to CAS, include = FALSE}
+
+#connect to casref01
+#Sys.setenv(CAS_username = "XXX")
+conn <- createConnection(username = Sys.getenv("CAS_username"))
+
+```
+
+## Assessing OPCS surgery codes for specific cancer sites
+
+This script should be used to define a surgery code list for a specific cancer site which would be used to remove the primary tumour. This is primarily used for the routine publication on cancer treatments from the National Disease Registration Service: [cancer treatments](https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments). These lists should be reviewed by and developed in consultation with experienced site-specific clinicians. For some cancer sites, procedures may vary by stage at diagnosis or tumour type.  
+
+This script will extract counts of OPSC-4 OPERTN codes, and their descriptions, extracted from HES for patients that have had an `r site_name`  diagnosis between `r paste0(min_diagnosis_year, " and ", max_diagnosis_year)` recorded in the national cancer registration dataset (counts below 5 have been suppressed to 5). Procedures extracted from HES APC undertaken in the period of 31 days prior to 365 days post diagnosis are included. `r paste0(site_name, "s were defined as: ", site_definition)`. This script will also flag the excisional surgery codes that are potentially ‘relevant’ for the site based on the OPSC-4 description and counts extracted. 
+
+This list should then be shared with a site-specific clinician to gain clinical expertise on which procedures should be treated as ‘relevant’ as excisional surgeries for the cancer (and possibly some codes in the category ‘this is an excision, but only for early stage cancer’)? This generally takes a couple of 45-minute calls a few weeks apart.
+
+Once a list exists, the *surgery timeframes* code should be run to check appropriate timeframes to use for CT, RT and SG treatments for the site.
+
+```{r data extract, echo=FALSE}
+
+opcs4_list <- dbGetQueryOracle(conn, paste0("select /*+ USE_HASH(zo ho) */  count(*) procedure_count, OPERTN, SHORTDESC, DESCRIPTION
+from ",av_tumour_table,".at_tumour_england ate
+left join heslive.HES_LINKAGE_AV_APC hl on ate.patientid=hl.patientid
+left join heslive.hesapc ha on hl.datayear=ha.datayear and hl.epikeyanon=ha.epikeyanon
+left join heslive.hesapc_opertn ho on hl.datayear=ho.datayear and hl.epikeyanon=ho.epikeyanon
+left join springmvc3.ZOPCS@",snapshot," zo on ho.OPERTN=zo.ZOPCSID
+
+where diagnosisyear between ",min_diagnosis_year," and ",max_diagnosis_year,"
+and to_date(ha.EPISTART_RAW,'DDMMYYYY')-diagnosisdatebest between -31 and 365 
+and POS=1
+and ",site_definition, "
+
+group by OPERTN, SHORTDESC, DESCRIPTION
+order by 1 desc
+"))
+
+```
+
+
+```{r combine relevant word lists, include=FALSE}
+
+# Remove "cancer" from the site name list and make upper case
+site_name_list_tidy = sub(" CANCER", "", c(toupper(site_name),toupper(site_name_list)))
+
+# Set words for surgery
+surgery_list_tidy = c("EXCISION","RESECTION","CAUTERISATION","EXTIRPATION","DESTRUCTION", toupper(surgery_list))
+
+# OF LESION?
+
+# Tidy stop words
+stop_words_tidy = toupper(stop_words)
+
+```
+
+## Selecting relevant procedures
+
+Possibly relevant procedures are flagged in the RELEVANT_SURGERY_CODE column as 'y' if both the site and surgery type are included in the short or full description, and 'm' if only the site, or surgery type is included in the short or full description.  
+
+Counts less than 5 are suppressed to 5.  
+
+The following words are used for the site list: `r paste0(site_name_list_tidy, collapse = ", ")`
+
+The following words are used for the surgery list: `r paste0(surgery_list_tidy, collapse = ", ")`
+
+```{r identify relevant procedures, echo=FALSE, results='asis'}
+
+# suppress counts less than 5
+# and flag possible relevant surgery codes based on the OPSC4 description and counts
+## if have resection in the desc
+## if have the cancer site in the desc
+
+opcs4_list_flagged <- opcs4_list |>
+  mutate(PROCEDURE_COUNT = case_when(PROCEDURE_COUNT<5 ~ 5, 
+                                     TRUE ~ PROCEDURE_COUNT),
+         SHORTDESC = toupper(SHORTDESC),
+         DESCRIPTION = toupper(DESCRIPTION))|>
+  mutate(RELEVANT_SITE_SHORTDESC = sapply(site_name_list_tidy,
+                                          str_detect,
+                                          string = SHORTDESC) |>
+           rowSums(na.rm = TRUE)) |>
+  mutate(RELEVANT_SITE_FULLDESC = sapply(site_name_list_tidy,
+                                         str_detect,
+                                         string = DESCRIPTION) |>
+           rowSums(na.rm = TRUE)) |>
+  mutate(RELEVANT_SURGERY_SHORTDESC = sapply(surgery_list_tidy,
+                                             str_detect,
+                                             string = SHORTDESC) |>
+           rowSums(na.rm = TRUE)) |>
+  mutate(RELEVANT_SURGERY_FULLDESC = sapply(surgery_list_tidy,
+                                            str_detect,
+                                            string = DESCRIPTION) |>
+           rowSums(na.rm = TRUE)) |>
+  mutate(EXCLUDE_FLAG_SHORTDESC = sapply(stop_words_tidy,
+                               str_detect,
+                               string = SHORTDESC) |>
+           rowSums(na.rm = TRUE)) |>
+  mutate(EXCLUDE_FLAG_FULLDESC = sapply(stop_words_tidy,
+                               str_detect,
+                               string = DESCRIPTION) |>
+           rowSums(na.rm = TRUE)) |>
+  mutate(RELEVANT_SURGERY_CODE = case_when(((RELEVANT_SITE_SHORTDESC>0|RELEVANT_SITE_FULLDESC>0) &
+                                             (RELEVANT_SURGERY_SHORTDESC>0|RELEVANT_SURGERY_FULLDESC>0) &
+                                              EXCLUDE_FLAG_SHORTDESC==0 & 
+                                              EXCLUDE_FLAG_FULLDESC==0 )
+                                           ~ "y", #both site and excision mentioned and no excluded word
+                                           
+                                           (((RELEVANT_SITE_SHORTDESC>0|RELEVANT_SITE_FULLDESC>0) |
+                                             (RELEVANT_SURGERY_SHORTDESC>0|RELEVANT_SURGERY_FULLDESC>0)) &
+                                              EXCLUDE_FLAG_SHORTDESC==0 & 
+                                              EXCLUDE_FLAG_FULLDESC==0)
+                                           ~ "m", #either site or excision mentioned and no excluded word
+                                           
+                                           TRUE ~ NA))
+
+# table output
+datatable(opcs4_list_flagged, 
+          rownames = FALSE,
+          colnames=c(gsub("_"," ",colnames(opcs4_list_flagged))),
+          options = list(
+            pageLength = 5,
+            columnDefs = list(
+              list(
+                targets = 0:1, 
+                width = '100px'),
+              list(
+                targets = 2:3, 
+                width = '200px'),
+              list(
+                targets = 4:8, 
+                width = '50px'))))
+
+
+# save data to share with clinician
+opcs4_list_flagged_tidy <- opcs4_list_flagged |>
+  select("PROCEDURE_COUNT","OPERTN","SHORTDESC","DESCRIPTION","RELEVANT_SURGERY_CODE")
+
+write_xlsx(opcs4_list_flagged_tidy,paste0(output_filepath,output_filename), na.strings = "")
+
+```
+
+## Word frequency in the procedure list extracted
+
+You may want to update the inputs accounting for common words found here.
+
+```{r wordcloud, echo=FALSE, results='asis'}
+
+# create dataframe with word and freq in each column
+tidy_des <- opcs4_list |>
+  mutate(desc = tolower(SHORTDESC)) |>
+  unnest_tokens(word, desc) |>
+  filter(str_detect(word, "[a-z]"))
+
+# remove stop words
+tidy_des <- tidy_des |>
+    filter(!word %in% stop_words$word)
+
+# count frequency of words
+count_dataframe <- tidy_des |>
+  count(word, sort = TRUE)
+
+# plot word cloud
+wordcloud(words = count_dataframe$word, 
+          freq = count_dataframe$n, 
+          min.freq = 5, 
+          max.words=200, 
+          random.order=FALSE, 
+          rot.per=0.35,
+          colors=brewer.pal(8, "Dark2"))
+
+
+# print table of frequency too
+freq_table <- tidy_des |>
+  count(word, sort = TRUE)
+
+```
+
+```{r wordcloud2, echo=FALSE, results='asis'}
+
+count_dataframe <- count_dataframe|>
+  filter(n>=5)
+
+wordcloud2(count_dataframe,
+           size=.8,
+           gridSize = 8,
+           #shape = "square",
+           color=brewer.pal(8, "Dark2"))
+
+```
+
+
+```{r freq table, echo=FALSE, results='asis'}
+
+datatable(freq_table, 
+          rownames = FALSE)
+
+```
+

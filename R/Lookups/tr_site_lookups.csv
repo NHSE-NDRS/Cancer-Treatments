@@ -1,0 +1,10 @@
+SITE,AV_TABLE_NAME,AV_FIELD_NAME,HES_TABLE_NAME,HES_FIELD_NAME,OPCS4_CODE,SITE_CODE
+LIVER,tr_av_liver,liver_avtreat,tr_hes_liver,liver_hes,"('J124', 'J125', 'J126', 'J127')",('Liver excluding intrahepatic cholangiocarcinoma')
+OESOPHAGUS,tr_av_oesoph,oesoph_avtreat,tr_hes_oesoph,oesoph_hes,"('G421', 'G431', 'G146', 'G171', 'G438')",('Oesophagus')
+STOMACH,tr_av_stomach,stomach_avtreat,tr_hes_stomach,stomach_hes,"('G421', 'G146', 'G449')",('Stomach')
+BLADDER: T1,tr_av_bladder,bladder_avtreat,tr_hes_bladder,bladder_hes,"('M421',  'M422',  'M423',  'M428',  'M429')",('Malignant bladder non invasive T1')
+BLADDER: NON-MALIG,tr_av_bladder_Dcodes,bladder_avtreat_Dcodes,tr_hes_bladder_Dcodes,bladder_hes_Dcodes,"('M421',  'M422',  'M423',  'M428',  'M429')","('D414','D090')"
+CERVIAL: CONE BIOPSIES,tr_av_conebiops,conebiops_avtreat,tr_hes_conebiops,conebiops_hes,"('Q014', 'Q033', 'Q031', 'Q032')",('Cervix')
+CERVICAL: LYMPHADENECTOMIES,tr_av_lymph,lymph_avtreat,tr_hes_lymph,lymph_hes,"('T856', 'T859', 'T865')",('Cervix')
+COLORECTAL: ENDOSCOPIES,tr_av_colorec,colorec_avtreat,tr_hes_colorec,colorec_hes,"('H201', 'H412', 'H206', 'H231', 'H236', 'H205', 'H202', 'H122', 'H235', 'H239', 'H402', 'H232', 'H261', 'H208', 'H341', 'H418', 'H209', 'H248', 'H238', 'H204', 'H419', 'H221', 'H251', 'H259', 'H229', 'H181', 'H281', 'H191', 'H561')","('Colon', 'Rectum')"
+COLORECTAL: APPENDECTOMIES,tr_av_coloappen,colorec_avtreat_appen,tr_hes_coloappen,colorec_hes_appen,"('H024', 'H019', 'H011')",('C181')

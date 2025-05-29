@@ -1,0 +1,554 @@
+---
+title: "Assessing timeframes"
+author: "Natalia Petersen"
+date: "2025-01-02"
+output: html_document
+
+knit: (function(input, ...) {
+    rmarkdown::render(
+      input,
+      output_dir = "N:/INFO/_LIVE/NCIN/Treatment Flags/Treatments data 2022/Bladder resection/"
+    )
+  })
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+
+```{r install packages, include=FALSE}
+
+library(NDRSAfunctions) #install via instructions here https://github.com/NHSE-NDRS/NDRSAfunctions
+library(dplyr)
+library(ggplot2)
+library(openxlsx2)
+library(tidyverse)
+```
+
+```{r set parameters, include = FALSE}
+
+# Set the snapshot and schema
+avyyyy <- "av2022"
+snapshot <- "cas2501l" #for springmvc3.ZOPCS table
+CAS_username <- "analysischarlotteeversfield"
+
+# Cancer site name
+cancer_site = 'bladder_cancer'
+
+# Define cancer site
+use_tumour_cohort = FALSE #specify if you want to use the tr tumour cohort table, or create a new cohort
+
+#site_definition = "tumour_code = 'Uncertain/unknown or other bladder'"
+site_definition = "site_icd10_o2_3char in ('C67')"
+
+# Set the diagnosis years 
+min_diagnosis_year<-"2016"
+max_diagnosis_year<-"2022"
+
+# Set resection list filename - these should have been agreed with the clinician
+resection_list <- r"(Potentially_relevant_bladder_cancer_resections_v0.0.xlsx)"
+
+# Set filepath to save data:
+output_filepath = r"(N:\INFO\_LIVE\NCIN\Treatment Flags\Treatments data 2022\Bladder resection\)"
+
+# Set whether want to drop previous cohort table - TRUE/FALSE
+drop_cohort_table = TRUE
+
+```
+
+```{r set plot output file names, include = FALSE}
+
+# Set output names
+output_plot_sg = paste0(cancer_site, "_timeframes_sg.png")
+output_plot_ct = paste0(cancer_site, "_timeframes_ct.png")
+output_plot_rt = paste0(cancer_site, "_timeframes_rt.png")
+
+```
+
+```{r connect to CAS, include = FALSE}
+#Create CAS connection with casref02
+CAS_casref02 = createConnection(sid = "CASREF02", username = CAS_username)
+```
+
+```{r read in surgery codes, include = FALSE}
+
+# Surgery codes
+# Reads in the relevant surgery codes agreed with the clinician, including only those flagged as 'y'
+surgery_list <- read_xlsx(paste0(output_filepath,resection_list))
+surgery_codes <- surgery_list %>%
+  mutate(RELEVANT_SURGERY_CODE = toupper(RELEVANT_SURGERY_CODE)) %>% # Capitalise all values
+  filter(substr(RELEVANT_SURGERY_CODE, 1, 1) == "Y") # Check the first character
+
+# format surgery codes list
+surgery_codes <- shQuote(surgery_codes$OPERTN) # adds quotation marks
+surgery_codes_list <- paste0(surgery_codes, collapse = ', ') # adds commas
+surgery_codes_list <- gsub('"', "'", surgery_codes_list) # changes to single quotes
+
+
+```
+
+
+This script should be used to define treatment timeframes for a specific cancer site, for surgery, chemotherapy, and radiotherapy. This is primarily used for the routine publication on cancer treatments from the National Disease Registration Service: [cancer treatments](https://digital.nhs.uk/ndrs/data/data-outputs/cancer-data-hub/cancer-treatments). These plots should be reviewed by and developed in consultation with experienced site-specific clinicians.  
+
+This script will extract treatment data and filter to 1 month before diagnosis to 2 years after diagnosis for the cancer site of interest. These are then plotted to present the point at which 95% of the treated cohort had received the specified treatment.
+
+Although this step requires a data-driven approach, these plots should be shared with a site-specific clinician to gain clinical expertise on how this compares to their experience in clinical practice.
+
+This script should be run following the definition of surgery codes using the *Assessing OPCS surgery codes* script to define the relevant excision codes. 
+
+
+```{r create cohort data, include = FALSE}
+
+if(drop_cohort_table == TRUE){
+dbSendQueryOracle(CAS_casref02, paste0("drop table ",cancer_site,"_cohort_table purge"))
+}
+
+if(use_tumour_cohort == TRUE){
+  
+  dbSendQueryOracle(CAS_casref02, 
+paste0("create table ",cancer_site,"_cohort_table as
+select tumourid, patientid, nhsnumber, diagnosisdatebest
+FROM tr_tumour_cohort AVT 
+WHERE ",site_definition," 
+AND extract(year from avt.diagnosisdatebest) between ",min_diagnosis_year," and ",max_diagnosis_year,"
+"))
+  
+} else {
+  
+  dbSendQueryOracle(CAS_casref02, 
+paste0("create table ",cancer_site,"_cohort_table as
+select tumourid, patientid, nhsnumber, diagnosisdatebest
+FROM ",avyyyy,".at_tumour_england@casref02 AVT 
+WHERE ",site_definition," 
+AND avt.diagnosisyear between ",min_diagnosis_year," and ",max_diagnosis_year,"
+AND avt.ctry_code = 'E'
+AND avt.statusofregistration = 'F'
+AND avt.dedup_flag = '1'
+AND avt.age BETWEEN 0 AND 200
+"))
+
+  }
+
+
+```
+
+
+## Assessing surgeries timeframes
+
+
+```{r surgery data extract, echo=FALSE, warning=FALSE}
+
+# AV.treatment
+av_treat<-dbGetQueryOracle(CAS_casref02, 
+paste0("select opertn
+,obs_resect_time
+,count(distinct tumourid)
+from (select opcs4_code as opertn
+, (avtreat.eventdate-tc.diagnosisdatebest) as obs_resect_time
+, RANK() OVER (PARTITION BY tc.tumourid ORDER BY avtreat.eventdate, avtreat.eventid) AS rk 
+, tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN ",avyyyy,".at_treatment_england@casref02 avtreat ON avtreat.tumourid=tc.tumourid 
+AND eventcode IN ('01a','01b','01z', '01c')
+where avtreat.opcs4_code in (",surgery_codes_list,")
+AND (avtreat.eventdate-tc.diagnosisdatebest BETWEEN -31 AND 730) 
+)
+WHERE rk=1
+group by obs_resect_time, opertn"))
+
+
+#HES
+HES_treat<-dbGetQueryOracle(CAS_casref02, 
+paste0("select opertn
+,obs_resect_time
+,count(distinct tumourid)
+from (select opertn
+, (ho.opdate-tc.diagnosisdatebest) as obs_resect_time
+,RANK() OVER (PARTITION BY tc.tumourid ORDER BY ho.opdate, hl.datayear,hl.epikeyanon,POS) AS rk 
+, tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN heslive.hes_linkage_av_apc@casref02 hl ON tc.patientid = hl.patientid 
+INNER JOIN heslive.hesapc_opertn@casref02 ho ON ho.datayear = hl.datayear AND ho.epikeyanon = hl.epikeyanon 
+INNER JOIN heslive.hesapc@casref02 ha ON ha.datayear = hl.datayear AND ha.epikeyanon = hl.epikeyanon 
+where ho.opertn in (",surgery_codes_list,")
+AND (ho.opdate-tc.diagnosisdatebest BETWEEN -31 AND 730) 
+)
+WHERE rk=1
+group by obs_resect_time, opertn
+
+union all
+
+select opertn
+,obs_resect_time
+,count(distinct tumourid)
+from (select opertn
+, (op.apptdate-tc.diagnosisdatebest) as obs_resect_time
+,RANK() OVER (PARTITION BY tc.tumourid ORDER BY op.apptdate, h2.datayear,h2.attendkeyanon,POS) AS rk 
+, tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN heslive.hes_linkage_av_op@casref02 h2 ON tc.patientid = h2.patientid
+INNER JOIN heslive.hesop_opertn@casref02 ho2 ON ho2.datayear = h2.datayear AND ho2.attendkeyanon = h2.attendkeyanon
+INNER JOIN heslive.hesop@casref02 op ON op.datayear = h2.datayear and op.attendkeyanon = h2.attendkeyanon 
+where ho2.opertn in (",surgery_codes_list,")
+AND (op.apptdate-tc.diagnosisdatebest BETWEEN -31 AND 730)
+)
+WHERE rk=1
+group by obs_resect_time, opertn
+"))
+
+```
+
+
+```{r surgery data for plotting, echo=FALSE}
+
+# Merge av_treat and HES data together
+treat_data<-rbind(av_treat,HES_treat)
+
+#numerator = number of treatments by days from diagnosis
+#denominator = total resections in 2 years
+treat_data<- treat_data %>%
+  group_by(OBS_RESECT_TIME) %>%
+  summarize("count" = sum(`COUNT(DISTINCTTUMOURID)`))%>%
+  mutate(denom=sum(count),
+         pct=(cumsum(count)/sum(count))*100)
+```
+
+
+```{r sg plots, echo=FALSE, warnings = FALSE}
+
+treat_data<-treat_data|>
+  filter(!OBS_RESECT_TIME==0)
+
+site_plot_sg<-ggplot(treat_data, aes(x=OBS_RESECT_TIME, y=pct, group=1)) +
+  geom_line(colour="#238789",size=1)+
+  theme_minimal()+
+  theme(panel.border = element_rect(colour = "gray10", fill=NA, size=0.5),
+        panel.background = element_rect(fill = "white", color = NA),  # White panel background
+    plot.background = element_rect(fill = "white", color = NA)   # White plot background
+    )+
+  ggtitle(label = paste0("Number of days between diagnosis and resections in AV treatment, HESAPC and \nHESOP")) +
+  ylab("Percentage of resections") + 
+  xlab("Days from diagnosis")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8))+
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", scientific = FALSE),breaks = scales::pretty_breaks(n = 10))+
+  scale_x_continuous(limits=c(-31, 750),
+                     breaks=c(seq(-31,750, by=30)),expand = c(0,0))+
+  geom_hline(yintercept =95, linetype="dashed")
+
+print(site_plot_sg)
+  
+point_95<-filter(treat_data,round(pct,0)==95)
+if (nrow(point_95) == 0) {
+  point_95 <- treat_data %>%
+    slice(which.min(abs(pct - 95))) # If no rows round to 95, select the row with pct closest to 95
+}
+time_point<-(min(point_95$OBS_RESECT_TIME)/30.5)
+time_point <- round(time_point, digits = 2) # make to 2dp
+
+# Round to the nearest 3-month interval
+rounded_months <- ceiling(time_point / 3) * 3
+
+if (rounded_months < 6) {
+  rounded_months <- 6
+} else if (rounded_months > 15) {
+  rounded_months <- 15
+}
+
+```
+
+The 95% point for surgeries is at `r paste0(time_point)` months (`r paste0(round(min(point_95$OBS_RESECT_TIME)))` days).
+
+To the nearest 3-months, this would be `r paste0(rounded_months)` months.
+
+
+```{r sg export data, echo=FALSE}
+
+# Graph export
+ggsave(filename = paste0(output_filepath,output_plot_sg), plot = site_plot_sg, width = 8, height = 6, dpi = 300)
+
+```
+
+
+## Assessing chemotherapy timeframes
+
+
+```{r ct data extract, echo=FALSE}
+
+av_treat_ct<-dbGetQueryOracle(CAS_casref02, paste0(
+"select obs_ct_time, count(distinct tumourid)
+from(select (avtreat.eventdate-tc.diagnosisdatebest) as obs_ct_time
+, RANK() OVER (PARTITION BY tc.tumourid ORDER BY avtreat.eventdate, avtreat.eventid) AS rk 
+,  tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN ",avyyyy,".at_treatment_england@casref02 avtreat ON avtreat.tumourid=tc.tumourid 
+AND eventcode IN ('02','04','15','CTX') 
+AND (avtreat.eventdate-tc.diagnosisdatebest BETWEEN -31 AND 730)
+) where rk=1
+group by obs_ct_time
+"))
+
+
+sact1_ct<-dbGetQueryOracle(CAS_casref02, paste0(
+"select obs_ct_time, count(distinct tumourid)
+from(select (sr.start_date_of_regimen-tc.diagnosisdatebest) as obs_ct_time
+,RANK() OVER (PARTITION BY tc.tumourid ORDER BY sr.start_date_of_regimen, sr.merged_regimen_id, st.merged_tumour_id) AS rk 
+,  tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN sact_legacy.patient@casref02 sp ON tc.nhsnumber=sp.nhs_number 
+INNER JOIN sact_legacy.tumour@casref02 st ON sp.merged_patient_id=st.merged_patient_id 
+INNER JOIN sact_legacy.regimen@casref02 SR on st.merged_tumour_id=sr.merged_tumour_id 
+AND (NOT (benchmark_group IN ('NOT CHEMO','HORMONES','ZOLEDRONIC ACID','PAMIDRONATE','DENOSUMAB', 'RADIUM 223', 'LUTETIUM-177', 'YTTRIUM-90') OR benchmark_group IS NULL)) 
+AND sr.start_date_of_regimen<=TO_DATE('2017-06-30','YYYY-MM-DD')
+AND (sr.start_date_of_regimen-tc.diagnosisdatebest BETWEEN -31 AND 730)
+) where rk=1
+group by obs_ct_time
+"))
+
+
+sact2_ct<-dbGetQueryOracle(CAS_casref02, paste0(
+"select obs_ct_time, count(distinct tumourid)
+from(select (sr.start_date_of_regimen-tc.diagnosisdatebest) as obs_ct_time
+,RANK() OVER (PARTITION BY tc.tumourid ORDER BY sr.start_date_of_regimen, sr.merged_regimen_id, st.sact_tumour_id) AS rk
+, tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN sact.at_patient_england@",snapshot," sp ON tc.nhsnumber=sp.nhs_number 
+INNER JOIN sact.at_tumour_england@",snapshot," st ON sp.encore_patient_id = st.encore_patient_id
+INNER JOIN sact.at_regimen_england@",snapshot," sr ON st.sact_tumour_id=sr.sact_tumour_id 
+AND (NOT (benchmark_group IN ('NOT CHEMO','HORMONES','ZOLEDRONIC ACID','PAMIDRONATE','DENOSUMAB', 'RADIUM 223', 'LUTETIUM-177', 'YTTRIUM-90') OR benchmark_group IS NULL))
+AND sr.start_date_of_regimen>=TO_DATE('2017-07-01','YYYY-MM-DD')
+AND (sr.start_date_of_regimen-tc.diagnosisdatebest BETWEEN -31 AND 730) 
+) where rk=1
+group by obs_ct_time
+"))
+
+hes_ct<-dbGetQueryOracle(CAS_casref02, paste0("select obs_ct_time
+,count(distinct tumourid)
+from (select (ho.opdate-tc.diagnosisdatebest) as obs_ct_time
+,RANK() OVER (PARTITION BY tc.tumourid ORDER BY ho.opdate, hl.datayear,hl.epikeyanon,POS) AS rk 
+, tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN heslive.hes_linkage_av_apc@casref02 hl ON tc.patientid = hl.patientid 
+INNER JOIN heslive.hesapc_opertn@casref02 ho ON ho.datayear = hl.datayear AND ho.epikeyanon = hl.epikeyanon 
+INNER JOIN heslive.hesapc@casref02 ha ON ha.datayear = hl.datayear AND ha.epikeyanon = hl.epikeyanon 
+where ho.opertn in ('Y123','X962','X749','X748','X739','X738','X731','X729','X728','X724','X723','X722','X721','X719','X718',
+'X715','X714','X713','X712','X711','X709','X708','X705','X704','X703','X702','X701','X385','X384','X374','X373','X353','X352',
+'T482','T133','A106')
+AND (ho.opdate-tc.diagnosisdatebest BETWEEN -31 AND 730) 
+)
+WHERE rk=1
+group by obs_ct_time
+
+union all
+
+select obs_ct_time
+,count(distinct tumourid)
+from (select (op.apptdate-tc.diagnosisdatebest) as obs_ct_time
+,RANK() OVER (PARTITION BY tc.tumourid ORDER BY op.apptdate, h2.datayear,h2.attendkeyanon,POS) AS rk 
+, tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN heslive.hes_linkage_av_op@casref02 h2 ON tc.patientid = h2.patientid
+INNER JOIN heslive.hesop_opertn@casref02 ho2 ON ho2.datayear = h2.datayear AND ho2.attendkeyanon = h2.attendkeyanon
+INNER JOIN heslive.hesop@casref02 op ON op.datayear = h2.datayear and op.attendkeyanon = h2.attendkeyanon 
+where ho2.opertn in ('Y123','X962','X749','X748','X739','X738','X731','X729','X728','X724','X723','X722','X721','X719','X718',
+'X715','X714','X713','X712','X711','X709','X708','X705','X704','X703','X702','X701','X385','X384','X374','X373','X353','X352',
+'T482','T133','A106')
+AND (op.apptdate-tc.diagnosisdatebest BETWEEN -31 AND 730) 
+)
+WHERE rk=1
+group by obs_ct_time
+"))
+
+
+```
+
+```{r ct merge and filter data, echo=FALSE}
+
+# Merge together
+ct_data<-rbind(av_treat_ct,sact1_ct,sact2_ct,hes_ct)
+
+
+#numerator = number of treatments by days from diagnosis
+#denominator = total resections in 2 years
+ct_data_filtered<- ct_data %>%
+  group_by(OBS_CT_TIME) %>%
+  summarize("count" = sum(`COUNT(DISTINCTTUMOURID)`))%>%
+  mutate(denom=sum(count),
+         pct=(cumsum(count)/sum(count))*100)
+```
+
+
+
+```{r ct plots, echo=FALSE, warnings = FALSE}
+
+site_plot_ct<-ggplot(ct_data_filtered, aes(x=OBS_CT_TIME, y=pct, group=1)) +
+  geom_line(colour="#238789",size=1)+
+  theme_minimal()+
+  theme(panel.border = element_rect(colour = "gray10", fill=NA, size=0.5),
+        panel.background = element_rect(fill = "white", color = NA),  # White panel background
+    plot.background = element_rect(fill = "white", color = NA)   # White plot background
+    )+
+  ggtitle(label = paste0("Number of days between diagnosis and CT in AV treatment, SACT and HES")) +
+  ylab("Percentage of CT treatments") + 
+  xlab("Days from diagnosis")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8))+
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", scientific = FALSE),breaks = scales::pretty_breaks(n = 10))+
+  scale_x_continuous(limits=c(-31, 750),
+                     breaks=c(seq(-31,750, by=30)),expand = c(0,0))+
+  geom_hline(yintercept =95, linetype="dashed")
+
+print(site_plot_ct)
+
+point_95<-filter(ct_data_filtered,round(pct,0)==95)
+if (nrow(point_95) == 0) {
+  point_95 <- ct_data_filtered %>%
+    slice(which.min(abs(pct - 95))) # If no rows round to 95, select the row with pct closest to 95
+}
+time_point<-(min(point_95$OBS_CT_TIME)/30.5)
+time_point <- round(time_point, digits = 2) # make to 2dp
+
+# Round to the nearest 3-month interval
+rounded_months <- ceiling(time_point / 3) * 3
+
+if (rounded_months < 6) {
+  rounded_months <- 6
+} else if (rounded_months > 18) {
+  rounded_months <- 18
+}
+
+```
+
+The 95% point for chemotherapy is at `r paste0(time_point)` months (`r paste0(round(min(point_95$OBS_CT_TIME)))` days).
+
+To the nearest 3-months, this would be `r paste0(rounded_months)` months.
+
+```{r ct export data, echo=FALSE}
+
+# Graph export
+ggsave(filename = paste0(output_filepath,output_plot_ct), plot = site_plot_ct, width = 8, height = 6, dpi = 300)
+
+```
+
+
+
+## Assessing radiotherapy timeframes
+
+
+```{r rt data extract, echo=FALSE}
+
+av_treat_rt<-dbGetQueryOracle(CAS_casref02, paste0(
+                              "select obs_rt_time, count(distinct tumourid)
+from(select (avtreat.eventdate-tc.diagnosisdatebest) as obs_rt_time
+, RANK() OVER (PARTITION BY tc.tumourid ORDER BY avtreat.eventdate, avtreat.eventid) AS rk 
+,  tc.tumourid
+from ",cancer_site,"_cohort_table tc 
+INNER JOIN ",avyyyy,".at_treatment_england@casref02 avtreat ON avtreat.tumourid=tc.tumourid 
+AND eventcode IN ('04','05', '06', '22','RTX', '19')
+AND (avtreat.eventdate-tc.diagnosisdatebest BETWEEN -31 AND 730)
+) where rk=1
+group by obs_rt_time
+"))
+
+
+rtds1_rt<-dbGetQueryOracle(CAS_casref02, paste0(
+                           "select obs_rt_time, count(distinct tumourid)
+from(select (rl.apptdate-tc.diagnosisdatebest) as obs_rt_time
+,RANK() OVER (PARTITION BY tc.tumourid ORDER BY rl.apptdate,rl.attendid,rl.orgcodeprovider,pr.radiotherapyepisodeid,pr.prescriptionid) AS rk 
+,  tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN rtds2016.opcds_cas1712_linkage rl ON tc.patientid=rl.patientid
+INNER JOIN rtds2016.rtds_prescriptions pr ON pr.orgcodeprovider = rl.orgcodeprovider AND pr.attendid = rl.attendid 
+AND pr.apptdate = rl.apptdate
+AND (rl.apptdate-tc.diagnosisdatebest BETWEEN -31 AND 730)
+) where rk=1
+group by obs_rt_time
+"))
+
+
+rtds2_rt<-dbGetQueryOracle(CAS_casref02, paste0(
+                           "select obs_rt_time, count(distinct tumourid)
+from(select (pr.apptdate-tc.diagnosisdatebest) as obs_rt_time
+,RANK() OVER (PARTITION BY tc.tumourid ORDER BY TO_DATE(pr.apptdate),pr.attendid,pr.orgcodeprovider,pr.radiotherapyepisodeid,pr.prescriptionid) AS rk 
+, tc.tumourid
+from ",cancer_site,"_cohort_table tc
+INNER JOIN rtds.at_prescriptions_england@",snapshot," pr ON pr.patientid=tc.patientid
+AND pr.orgcodeprovider <>'7A3' 
+AND TO_DATE(pr.apptdate) >= TO_DATE('01-APR-16', 'dd-mm-yy') 
+AND (pr.apptdate-tc.diagnosisdatebest BETWEEN -31 AND 730)
+) where rk=1
+group by obs_rt_time
+"))
+
+```
+
+```{r rt merge and filter data, echo=FALSE}
+
+# Merge together
+rt_data<-rbind(av_treat_rt,rtds1_rt,rtds2_rt)
+
+
+#numerator = number of treatments by days from diagnosis
+#denominator = total resections in 2 years
+rt_data_filtered<- rt_data %>%
+  group_by(OBS_RT_TIME) %>%
+  summarize("count" = sum(`COUNT(DISTINCTTUMOURID)`))%>%
+  mutate(denom=sum(count),
+         pct=(cumsum(count)/sum(count))*100)
+```
+
+
+
+```{r rt plots, echo=FALSE, warnings = FALSE}
+
+site_plot_rt<-ggplot(rt_data_filtered, aes(x=OBS_RT_TIME, y=pct, group=1)) +
+  geom_line(colour="#238789",size=1)+
+  theme_minimal()+
+  theme(panel.border = element_rect(colour = "gray10", fill=NA, size=0.5),
+        panel.background = element_rect(fill = "white", color = NA),  # White panel background
+    plot.background = element_rect(fill = "white", color = NA)   # White plot background
+    )+
+  ggtitle(label = paste0("Number of days between diagnosis and RT in AV treatment and RTDS")) +
+  ylab("Percentage of RT treatments") + 
+  xlab("Days from diagnosis")+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1, size =8))+
+  scale_y_continuous(labels=function(x) format(x, big.mark = ",", scientific = FALSE),breaks = scales::pretty_breaks(n = 10))+
+  scale_x_continuous(limits=c(-31, 750),
+                     breaks=c(seq(-31,750, by=30)),expand = c(0,0))+
+  geom_hline(yintercept =95, linetype="dashed")
+
+print(site_plot_rt)
+
+point_95<-filter(rt_data_filtered,round(pct,0)==95)
+if (nrow(point_95) == 0) {
+  point_95 <- rt_data_filtered %>%
+    slice(which.min(abs(pct - 95))) # If no rows round to 95, select the row with pct closest to 95
+}
+time_point<-(min(point_95$OBS_RT_TIME)/30.5)
+time_point <- round(time_point, digits = 2) # make to 2dp
+
+# Round to the nearest 3-month interval
+rounded_months <- ceiling(time_point / 3) * 3
+
+if (rounded_months < 6) {
+  rounded_months <- 6
+} else if (rounded_months > 18) {
+  rounded_months <- 18
+}
+
+```
+
+The 95% point for radiotherapy is at `r paste0(time_point)` months (`r paste0(round(min(point_95$OBS_RT_TIME)))` days).
+
+To the nearest 3-months, this would be `r paste0(rounded_months)` months.
+
+```{r rt export data, echo=FALSE}
+
+# Graph export
+ggsave(filename = paste0(output_filepath,output_plot_rt), plot = site_plot_rt, width = 8, height = 6, dpi = 300)
+
+```
+
+
+
+
